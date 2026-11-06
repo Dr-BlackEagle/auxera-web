@@ -2,444 +2,2429 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Auxera">
 <meta name="theme-color" content="#0b0c10">
-<title>Auxera Web · Deneme</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<script src="lame.min.js" defer></script>
+<script src="mp4-muxer.min.js" defer></script>
+<title>Auxera</title>
 <style>
-:root{--bg:#0b0c10;--panel:#121419;--raise:#1a1d24;--raise2:#232731;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
---text:#e9ebf1;--muted:#a3a9b7;--dim:#8c93a3;--wave:#2fe0c0;--rec:#ff4d5c;--amber:#ffc44d;--ok:#2fe0c0;--bad:#ff6b78;color-scheme:dark}
+:root{
+  --bg:#0d0e12; --panel:#14161c; --raise:#1b1e26; --raise2:#232733; --line:#2a2f3a; --line2:#353b48;
+  --text:#e9ebf1; --muted:#8c93a3; --dim:#7a8191;
+  --wave:#2fe0c0; --wave2:#1a8f7c; --waveSel:#d8f3ff; --sel:rgba(120,150,255,.20); --selEdge:#8fa6ff;
+  --accent:#8b7cff; --accent2:#a99dff; --rec:#ff4d5c; --amber:#ffc44d; --ok:#3ddc84; --warn:#ffb020; --bad:#ff5a67;
+  --breath:rgba(255,170,60,.28); --breathOff:rgba(140,147,163,.16);
+  --r:12px; --tab:52px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
-body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-button{font:inherit;color:inherit;cursor:pointer}
-.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
-header{display:flex;align-items:center;gap:12px;padding:4px 2px}
-header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:.2px}
-header small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px}
-.card h2{margin:0 0 10px;font-size:12px;letter-spacing:1.3px;font-weight:600;color:var(--dim);text-transform:uppercase}
-.row{display:flex;align-items:center;gap:10px}
-.btn{height:46px;padding:0 18px;border-radius:23px;border:1px solid var(--line2);background:var(--raise);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500}
-.btn:active{background:var(--raise2)}
-.btn.pri{background:var(--rec);border-color:var(--rec);color:#fff;font-weight:600}
-.btn.wide{width:100%}
-.btn[disabled]{opacity:.45;pointer-events:none}
-.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.timer{font-variant-numeric:tabular-nums;font-size:46px;font-weight:300;letter-spacing:1px;line-height:1.1}
-.meter{position:relative;height:12px;border-radius:6px;background:#1a1d24;overflow:hidden}
-.meter b{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#1a8f7c 0%,var(--wave) 75%,var(--amber) 88%,var(--rec) 100%);background-size:var(--mw,300px) 100%;border-radius:6px}
-.meter i{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.8;left:0}
-.meter .tgt{position:absolute;top:0;bottom:0;background:rgba(255,196,77,.16);border-left:1px dashed rgba(255,196,77,.6);border-right:1px dashed rgba(255,196,77,.6)}
-.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px;font-variant-numeric:tabular-nums}
-.stats{display:flex;gap:16px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
-.stats b{color:var(--text);font-weight:600}
-canvas{display:block;width:100%}
-#live{height:90px;border-radius:12px;background:#0d0f13}
-.ctl{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:6px}
-.round{width:60px;height:60px;border-radius:30px;border:1.5px solid var(--line2);background:none;display:grid;place-items:center}
-.round.mark{border-color:rgba(255,92,106,.6);color:#ff5c6a;position:relative}
-.round.mark span[hidden]{display:none}
-.round.mark span{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--rec);color:#fff;font-size:11.5px;font-weight:700;display:grid;place-items:center;padding:0 5px}
-.recbtn{width:78px;height:78px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:none;display:grid;place-items:center}
-.recbtn i{display:block;width:56px;height:56px;border-radius:50%;background:var(--rec);transition:all .15s}
-.recbtn.on i{width:26px;height:26px;border-radius:6px}
-.hint{font-size:12.5px;color:var(--dim);text-align:center;margin:8px 0 0}
-.diag{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
-.diag dt{color:var(--muted)}.diag dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-.good{color:var(--ok)}.warn{color:var(--amber)}.badc{color:var(--bad)}
-.take{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
-.take:first-of-type{border-top:0}
-.take .t{flex:1;min-width:0}.take .t b{display:block;font-weight:600}.take .t small{color:var(--muted)}
-.ibtn{width:44px;height:44px;border-radius:22px;border:1px solid var(--line2);background:var(--raise);display:grid;place-items:center;flex:none}
-#tw{height:110px;border-radius:12px;background:#0d0f13;margin:10px 0 8px;touch-action:none}
-.empty{color:var(--dim);font-size:13.5px;text-align:center;padding:8px 0}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e9ebf1;color:#0b0c10;padding:10px 16px;border-radius:14px;font-size:14px;max-width:88vw;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
-.toast.on{opacity:1}
-.banner{border-radius:16px;padding:12px 14px;font-size:13.5px;background:rgba(255,196,77,.1);border:1px solid rgba(255,196,77,.35);color:#ffe3a3}
-.flash{animation:fl .35s}
-@keyframes fl{from{background:rgba(255,77,92,.35)}to{background:var(--panel)}}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-size:14px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--text);caret-color:var(--wave)}
+::placeholder{color:var(--dim);opacity:1}
+:root{color-scheme:dark}
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ic.f{fill:currentColor;stroke:none}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.hide{display:none!important}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column}
+
+/* ---------- home ---------- */
+#home{padding:env(safe-area-inset-top) 0 0}
+.hhead{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
+.logo{display:flex;align-items:center;gap:10px;flex:1}
+.logo b{font-size:21px;letter-spacing:.3px;font-weight:700}
+.logo small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:1px}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--text)}
+.iconbtn:active{background:var(--raise2)}
+.iconbtn:disabled{opacity:.32}
+.hactions{display:flex;gap:10px;padding:10px 16px 14px}
+.big{flex:1;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:650;font-size:15px}
+.big.rec{background:var(--rec);color:#fff;box-shadow:0 6px 20px rgba(255,77,92,.25)}
+.big.sec{background:var(--raise);border:1px solid var(--line)}
+.big:active{transform:scale(.98)}
+.list{flex:1;overflow:auto;padding:0 16px calc(16px + env(safe-area-inset-bottom))}
+.lt{color:var(--muted);font-size:12px;letter-spacing:.6px;text-transform:uppercase;margin:6px 2px 8px}
+.card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 6px 12px 14px;margin-bottom:10px}
+.card:active{background:var(--raise)}
+.card .thumb{width:44px;height:44px;border-radius:10px;background:var(--raise2);display:grid;place-items:center;color:var(--wave)}
+.card .meta{flex:1;min-width:0}
+.card .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .s{color:var(--muted);font-size:12.5px;margin-top:3px}
+.empty{color:var(--muted);text-align:center;padding:40px 20px;line-height:1.55}
+.empty svg{width:64px;height:64px;color:var(--dim);margin-bottom:10px}
+
+/* ---------- editor ---------- */
+#editor{display:grid;padding-top:env(safe-area-inset-top);
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto auto minmax(0,1fr) auto auto auto;
+  grid-template-areas:"top" "info" "over" "wave" "zoom" "tools" "trans"}
+#editor>*{min-width:0}
+.top{grid-area:top;display:flex;align-items:center;gap:2px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.pname{flex:1;min-width:0;padding:6px 8px;border-radius:10px;text-align:left}
+.pname b{display:block;font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname small{color:var(--muted);font-size:11.5px}
+.pname:active{background:var(--raise2)}
+.info{grid-area:info;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:8px 14px 6px}
+.clockwrap{min-width:0}
+.lname{display:none;font-size:13px;font-weight:600;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;text-align:left}
+.clock{font-size:30px;font-weight:300;letter-spacing:.5px;line-height:1}
+.clock.play{color:var(--amber)}
+.selinfo{display:grid;grid-template-columns:auto auto;gap:1px 8px;font-size:11.5px;color:var(--muted);text-align:right}
+.selinfo span:nth-child(2n){color:var(--text)}
+.over{grid-area:over;height:30px;margin:0 10px;position:relative;border-radius:7px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.over canvas{width:100%;height:100%;display:block}
+.wavebox{grid-area:wave;position:relative;min-height:150px;margin:8px 0 0;display:flex;flex-direction:row}
+.wcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.rrow{display:flex;flex:none;height:20px}
+.rrow .ruler{flex:1;min-width:0}
+.dbhead{width:46px;flex:none;font-size:10.5px;color:var(--muted);background:var(--panel);border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:0}
+.dbhead.hot{color:var(--amber)}.dbhead.over{color:var(--bad)}
+.dbhead.clip{background:var(--rec);color:#fff;font-weight:700}
+.wrow{flex:1;display:flex;min-height:0}
+.dbcol{width:46px;flex:none;position:relative;background:var(--panel);border-left:1px solid var(--line)}
+.dbcol canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.vmeter{width:46px;flex:none;display:flex;flex-direction:column;align-items:stretch;border-left:1px solid var(--line);background:var(--panel);padding:4px 4px 6px}
+.vm-clip{height:16px;border-radius:4px;background:#2a1418;color:#6b3a40;font-size:9.5px;font-weight:700;display:grid;place-items:center;letter-spacing:.5px}
+.vm-clip.on{background:var(--rec);color:#fff}
+.vm-val{height:20px;font-size:11.5px;text-align:center;line-height:20px;color:var(--text);font-weight:600}
+.vm-val.hot{color:var(--amber)}.vm-val.over{color:var(--bad)}
+.vm-body{flex:1;position:relative;display:flex;gap:3px;min-height:0;margin:10px 0 6px}
+.vm-scale{flex:1;position:relative;font-size:11px;color:var(--dim)}
+.vm-scale span{position:absolute;right:0;transform:translateY(50%);line-height:1}
+.vm-scale i{position:absolute;right:-3px;width:3px;height:1px;background:var(--line2);transform:translateY(50%)}
+.vm-track{width:11px;position:relative;border-radius:3px;background:#181b22;overflow:hidden}
+.vm-track b{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(to top,#27c49f 0%,#2fe0c0 66%,#ffc44d 80%,#ff7a3d 90%,#ff4d5c 100%);background-size:100% var(--th,200px);background-position:bottom}
+.vm-track b.pk{opacity:.45}
+.vm-track u{position:absolute;left:0;right:0;height:2px;background:#fff;bottom:0;opacity:0}
+.lvl{font-size:11.5px;color:var(--muted);margin-top:3px;min-height:15px;white-space:nowrap}
+.lvl b{color:var(--text);font-weight:600}
+.ruler{height:20px;position:relative;flex:none;border-bottom:1px solid var(--line);touch-action:none}
+.ruler canvas,.wave canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.wave{flex:1;position:relative;touch-action:none;background:linear-gradient(180deg,#101217,#0d0e12)}
+.vz{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.pill{height:30px;min-width:38px;padding:0 9px;border-radius:15px;background:rgba(27,30,38,.86);border:1px solid var(--line2);font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--text);backdrop-filter:blur(6px)}
+.pill:active{background:var(--raise2)}
+.pill.on{background:var(--wave);border-color:var(--wave);color:#0d0e12}
+.mstrip{flex:none;display:flex;align-items:center;gap:2px;height:32px;margin:0 8px 6px;padding:0 4px 0 10px;border-radius:9px;background:rgba(255,77,92,.08);border:1px solid rgba(255,77,92,.35);font-size:12.5px;min-width:0}
+.mstrip .mi{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);margin-left:6px}
+.mstrip .ic{width:16px;height:16px}
+.mstrip .flag{color:#ff5c6a;flex:none}
+.mstrip button{height:26px;min-width:30px;padding:0 8px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--text);font-size:12px;flex:none}
+.mstrip button:active{background:var(--raise2)}
+.mstrip button:disabled{opacity:.35}
+.mstrip #mSel{background:rgba(255,77,92,.18)}
+.selinfo{cursor:pointer;border-radius:8px;padding:3px 4px}
+.selinfo:active{background:var(--raise2)}
+.nud{display:flex;gap:6px;align-items:center}
+.nud .field{flex:1;min-width:0;text-align:center}
+.nud button{height:40px;min-width:46px;border-radius:10px;background:var(--raise);border:1px solid var(--line2);font-size:12.5px;flex:none}
+.nud button:active{background:var(--raise2)}
+.hsearch{padding:0 16px 8px}.hsearch.hide{display:none}
+.hfoot{color:var(--dim);font-size:12px;text-align:center;padding:4px 16px calc(16px + env(safe-area-inset-bottom))}
+.empty-wave{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);text-align:center;padding:20px;pointer-events:none;line-height:1.5}
+.ew-btns{display:flex;flex-direction:column;gap:10px;margin:14px auto 10px;width:min(260px,80%);pointer-events:auto}
+.ew-btns .btn{flex:none}
+.empty-wave small{display:block;font-size:12px;color:var(--dim);max-width:260px;margin:0 auto}
+.zoom{grid-area:zoom;display:flex;align-items:center;gap:6px;padding:8px 10px 4px;overflow-x:auto;scrollbar-width:none}
+.zoom::-webkit-scrollbar,.toolrow::-webkit-scrollbar{display:none}
+.zb{height:34px;padding:0 10px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap;flex:none}
+.zb:active{background:var(--raise2)}
+.zb .ic{width:18px;height:18px}
+.sp{flex:1}
+.tools{grid-area:tools;border-top:1px solid var(--line);background:var(--panel)}
+.tabs{display:flex;padding:6px 8px 0;gap:4px}
+.tabs button{flex:1;height:32px;border-radius:9px;font-size:13px;color:var(--muted);font-weight:550}
+.tabs button.on{background:var(--raise2);color:var(--text)}
+.toolrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 4px;padding:6px 6px 8px}
+.tool{min-width:0;height:54px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--text)}
+.tool:active{background:var(--raise2)}
+.tool:disabled{opacity:.3}
+.tool .ic{width:23px;height:23px}
+.tool.acc .ic{color:var(--wave)}
+.trans{grid-area:trans;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 10px calc(8px + env(safe-area-inset-bottom));background:var(--panel)}
+.tb{width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+.tb:active{background:var(--raise2)}
+.tb:disabled{opacity:.3}
+.tb.play{width:58px;height:58px;background:var(--text);color:#0d0e12}
+.tb.play .ic{width:26px;height:26px}
+.tb.rec{background:var(--rec);color:#fff;width:58px;height:58px}
+.tb.punch{border:1.5px solid var(--rec);color:var(--rec)}
+.tsep{width:1px;height:30px;background:var(--line);margin:0 6px}
+
+/* landscape: waveform left, controls right */
+@media (orientation:landscape) and (max-height:600px){
+  #editor{grid-template-columns:minmax(0,1fr) 296px;grid-template-rows:auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"info top" "over tools" "wave tools" "wave tools" "zoom trans";padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  .top{border-bottom:0;border-left:1px solid var(--line);background:var(--panel)}
+  .tools{border-top:0;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .toolrow{display:grid;grid-template-columns:repeat(3,1fr);overflow:auto;align-content:start;flex:1}
+  .tool{min-width:0;height:56px}
+  .trans{border-left:1px solid var(--line);padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+  .tb{width:42px;height:42px}.tb.play,.tb.rec{width:50px;height:50px}
+  .info{padding:6px 12px 4px}.clock{font-size:24px}
+  .pname{display:none}.lname{display:block}.top{justify-content:space-between}
+  .over{height:24px}.wavebox{margin-top:4px;min-height:0}
+  .vmeter{width:42px}.lvl{display:none}
+  .zoom{padding:6px 10px calc(6px + env(safe-area-inset-bottom))}
+  .zb{height:32px}
+}
+@media (orientation:landscape) and (min-height:601px){
+  #editor{grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"info top" "over tools" "wave tools" "wave tools" "zoom trans"}
+  .top{border-left:1px solid var(--line);background:var(--panel)}
+  .pname small{display:none}
+  .tools{border-left:1px solid var(--line);display:flex;flex-direction:column}
+  .toolrow{display:grid;grid-template-columns:repeat(3,1fr);align-content:start;flex:1}
+  .trans{border-left:1px solid var(--line)}
+}
+
+/* ---------- sheets / dialogs ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .18s}
+.scrim.on{opacity:1;pointer-events:auto}
+.scrim.light{background:rgba(0,0,0,.12)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--panel);border-top:1px solid var(--line2);border-radius:20px 20px 0 0;
+  max-height:78%;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .22s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+.sheet.on{transform:none}
+.sheet.compact{max-height:56%}
+.sheet.on ~ .toast{bottom:auto;top:calc(64px + env(safe-area-inset-top))}
+@media (orientation:landscape){ .sheet{left:auto;right:0;top:0;bottom:0;width:min(420px,64vw);max-height:none;border-radius:18px 0 0 18px;border-top:0;border-left:1px solid var(--line2);transform:translateX(105%);padding-top:env(safe-area-inset-top)} .sheet.on{transform:none} .sheet.compact{max-height:none} .sheet .grab{display:none} }
+.sh-h{display:flex;align-items:center;gap:8px;padding:14px 10px 6px 18px}
+.sh-h h3{margin:0;font-size:17px;flex:1;font-weight:650}
+.sh-b{overflow:auto;padding:4px 18px 18px}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:8px auto 0}
+.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:4px 0 12px}
+.target{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:4px 8px;margin-bottom:12px}
+.target b{color:var(--text);font-weight:600}
+.row{display:flex;align-items:center;gap:10px;margin:10px 0}
+.row label{flex:1;color:var(--text);font-size:13.5px}
+.row .v{min-width:64px;text-align:right;color:var(--wave);font-size:13px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:30px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--line2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--text);margin-top:-9px;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.seg{display:flex;background:var(--raise);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px;margin:6px 0 12px;flex-wrap:wrap}
+.seg button{flex:1;min-width:60px;height:34px;border-radius:8px;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--raise2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.btns{display:flex;gap:10px;margin-top:14px}
+.btn{flex:1;height:46px;border-radius:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--raise);border:1px solid var(--line)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.dan{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn:active{filter:brightness(1.15)}
+.btn:disabled{opacity:.35}
+.btn .ic{width:19px;height:19px}
+.step{display:flex;gap:10px;align-items:flex-start;margin:6px 0 4px}
+.step i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--raise2);display:grid;place-items:center;font-size:12px;flex:none;color:var(--muted)}
+.step.done i{background:var(--wave2);color:#fff}
+.step div{flex:1}
+.step b{font-weight:600}
+.badge{display:inline-block;font-size:11.5px;padding:2px 7px;border-radius:6px;background:var(--raise2);color:var(--muted);margin-left:6px}
+.badge.ok{background:rgba(61,220,132,.15);color:var(--ok)}
+.field{width:100%;height:44px;border-radius:11px;border:1px solid var(--line2);background:var(--raise);padding:0 12px;outline:none}
+.field:focus{border-color:var(--accent)}
+.meters{display:grid;grid-template-columns:1fr auto auto;gap:10px 12px;align-items:center;margin:8px 0}
+.meters .k{color:var(--muted);font-size:13px}
+.meters .val{font-size:16px}
+.mark{font-size:12px;padding:3px 8px;border-radius:7px}
+.mark.ok{background:rgba(61,220,132,.14);color:var(--ok)}
+.mark.no{background:rgba(255,90,103,.14);color:var(--bad)}
+.mark.na{background:var(--raise2);color:var(--muted)}
+.hrow{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:0 10px;border-radius:11px;text-align:left;margin-bottom:2px}
+.hrow:active{background:var(--raise)}
+.hrow .ic{width:17px;height:17px;color:var(--dim)}
+.hrow.rec .ic{color:var(--rec)}
+.hrow.c{background:var(--raise2);box-shadow:inset 0 0 0 1px var(--line2)}
+.hrow.c .ic{color:var(--accent2)}
+.hrow.r{opacity:.42}
+.hrow .hl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hrow .hd{color:var(--muted);font-size:12px}
+.hsep{color:var(--muted);font-size:12px;letter-spacing:.5px;text-transform:uppercase;margin:14px 2px 6px}
+.set-sec{color:var(--muted);font-size:12px;letter-spacing:.6px;text-transform:uppercase;margin:16px 0 4px}
+.set-row{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 0;border-bottom:1px solid var(--line)}
+.set-row label{flex:1}
+.set-row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+select.field{height:38px;width:auto;max-width:56%;padding:0 8px}
+.switch{width:46px;height:28px;border-radius:14px;background:var(--line2);position:relative;flex:none;transition:background .15s}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch.on{background:var(--accent)}
+.switch.on::after{transform:translateX(18px)}
+.menu{position:fixed;z-index:61;background:var(--raise);border:1px solid var(--line2);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 12px 40px rgba(0,0,0,.5);max-height:calc(100vh - 16px);overflow-y:auto;overscroll-behavior:contain}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 12px;border-radius:9px;text-align:left}
+.menu button:active{background:var(--raise2)}
+.menu button.dan{color:var(--bad)}
+.dialog{position:fixed;z-index:62;left:50%;top:42%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 40px));background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:18px}
+.dialog h3{margin:0 0 8px;font-size:17px}
+.dialog p{margin:0 0 12px;color:var(--muted);line-height:1.5}
+.toast.top{bottom:auto;top:calc(env(safe-area-inset-top) + 70px)}
+.jobbar{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 6px);z-index:66;background:var(--raise);border:1px solid var(--line2);border-radius:12px;padding:8px 8px 8px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.jobbar .jl{flex:1;min-width:0}
+.jobbar .jt{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jobbar .js{font-size:11.5px;color:var(--muted)}
+.jobbar .bar{height:4px;margin-top:5px}
+.jobbar button{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--raise2);flex:none}
+@media (orientation:landscape){ .jobbar{left:auto;width:min(420px,60vw)} }
+.abchip{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 64px);z-index:67;background:var(--raise);border:1px solid var(--wave);color:var(--text);border-radius:20px;height:40px;padding:0 16px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);white-space:nowrap}
+.abchip b{color:var(--wave)}.abchip.orig b{color:var(--amber)}.abchip.hide{display:none}
+.intro{position:fixed;inset:0;z-index:80;background:rgba(8,9,12,.82);display:grid;place-items:center;padding:20px}
+.intro .card2{width:min(380px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:22px 20px 16px}
+.intro .ih{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:650;margin-bottom:10px}
+.intro .ih .ic{width:26px;height:26px;color:var(--wave)}
+.intro p{color:var(--text);line-height:1.55;font-size:14.5px;margin:0 0 14px}
+.intro .dots{display:flex;gap:6px;justify-content:center;margin:4px 0 12px}
+.intro .dots i{width:7px;height:7px;border-radius:50%;background:var(--line2)}.intro .dots i.on{background:var(--wave)}
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);z-index:70;background:#e9ebf1;color:#111;padding:11px 16px;border-radius:12px;font-size:13.5px;max-width:calc(100% - 40px);opacity:0;transition:all .2s;pointer-events:none;text-align:center;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.busy{position:fixed;inset:0;z-index:65;background:rgba(8,9,12,.7);display:grid;place-items:center}
+.busy .box{width:min(320px,calc(100% - 48px));background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:20px}
+.busy .lb{font-weight:600;margin-bottom:12px}
+.bar{height:6px;border-radius:3px;background:var(--line2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--wave);transition:width .15s}
+.busy .pc{color:var(--muted);font-size:12.5px;margin:8px 0 14px}
+
+/* ---------- record overlay ---------- */
+#recov{position:fixed;inset:0;z-index:50;background:#0a0b0e;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom))}
+.rv-top{display:flex;align-items:center;justify-content:space-between;padding:4px 18px}
+.rv-mode{font-weight:650;font-size:15px;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--rec)}
+.dot.blink{animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.25}}
+.rv-src{color:var(--muted);font-size:12px}
+.rv-tr{display:flex;align-items:center;gap:10px;min-width:0}
+.rv-txt{height:30px;padding:0 10px;font-size:12.5px;gap:5px}
+#recov.script .rv-txt{display:none}
+.rv-ghint{display:none;margin:-6px 14px 0;color:var(--amber);font-size:12px;line-height:1.4;flex:none}
+.rv-ghint.on{display:block}
+body.recsheet .scrim{z-index:58} body.recsheet .sheet{z-index:59}
+.rv-main{flex:1;display:flex;min-height:0}
+.rv-left{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:16px;min-height:0}
+.rv-head{display:flex;flex-direction:column;align-items:center;gap:6px}
+.rv-time{font-size:60px;font-weight:200;text-align:center;letter-spacing:1px}
+.rv-state{text-align:center;color:var(--muted);min-height:20px}
+.rv-state.pre{color:var(--amber)}
+.rv-wave{height:110px;position:relative;flex:none}
+.rv-wave canvas{width:100%;height:100%;display:block}
+.rv-db{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 14px;color:var(--muted);font-size:12px;flex:none}
+.rv-db b{font-size:21px;color:var(--text);font-weight:500;margin-right:3px}
+.rv-db b.hot{color:var(--amber)}.rv-db b.over{color:var(--bad)}
+.cliptag{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:5px;background:var(--rec);color:#fff;font-size:11px;font-weight:700}
+.rv-note{color:var(--muted);text-align:center;font-size:12.5px;padding:0 20px;line-height:1.45}
+.rv-meter{width:62px;flex:none;display:flex;flex-direction:column;padding:6px 8px 6px 4px;border-left:1px solid #1d2028}
+.rv-meter .vm-track{width:15px}
+.rv-meter .vm-val{font-size:13px}
+.vm-track s{position:absolute;left:0;right:0;background:rgba(255,196,77,.2);border-top:1px solid #ffc44d;border-bottom:1px solid #ffc44d;pointer-events:none}
+.rv-gain{display:flex;align-items:center;gap:10px;margin:0 14px;flex:none}
+.rv-gain span{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.rv-gain input{flex:1;min-width:0}
+.rv-gain b{min-width:64px;text-align:right;font-weight:500;color:var(--wave);font-size:14px}
+#recov.ready .rv-stop{border-color:var(--rec)}
+#recov.ready .rv-stop i{border-radius:50%;width:38px;height:38px}
+#recov.ready .rv-time{color:var(--amber)}
+.rv-ctl{display:flex;align-items:center;justify-content:center;gap:26px;padding:10px 0 4px}
+.rv-stop{width:76px;height:76px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center}
+.rv-stop i{width:28px;height:28px;border-radius:6px;background:var(--rec);display:block}
+.rv-side{width:54px;height:54px;border-radius:50%;background:var(--raise);display:grid;place-items:center}
+.rv-mark{color:#ff5c6a;position:relative;border:1.5px solid rgba(255,92,106,.6)}
+.rv-mark b{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#ff5c6a;color:#fff;font-size:11.5px;line-height:20px;display:none}
+.rv-mark b.on{display:block}
+.rv-mark.flash{animation:mkf .45s}
+@keyframes mkf{0%{background:#ff5c6a;color:#fff}100%{background:var(--raise)}}
+#recov.ready .rv-mark{visibility:hidden}
+.rv-free{color:var(--dim);font-size:12px;text-align:center;flex:none}.rv-free.low{color:var(--amber)}
+#recov.script .rv-free{display:none}
+.countdown{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(11,12,16,.92);font-size:120px;font-weight:200}
+/* teleprompter inside the record screen */
+.rv-prompt{display:none;position:relative;flex:1;min-height:0;overflow:hidden;margin:0 4px 0 16px;touch-action:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 86%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 86%,transparent 100%)}
+.pr-inner{position:absolute;left:0;right:6px;top:0;will-change:transform;font-size:var(--prs,28px);line-height:1.42}
+.pr-inner p{margin:0 0 .45em;color:#a4abb8;transition:color .2s}
+.pr-inner p.np{margin-top:.9em}
+.pr-inner p.past{color:#4c5260}
+.pr-inner p.cur{color:#fff}
+.pr-mark{position:absolute;left:-14px;right:0;height:0;border-top:1.5px dashed rgba(255,196,77,.5);pointer-events:none}
+.pr-mark::before{content:"";position:absolute;left:0;top:-7px;border:6px solid transparent;border-left:8px solid #ffc44d}
+.pr-ctl{display:none;align-items:center;justify-content:center;gap:6px;padding:6px 10px 0;flex-wrap:nowrap}
+.pr-ctl .pill{height:36px;min-width:36px;white-space:nowrap;padding:0 9px;flex:none}
+.pr-ctl .num{min-width:36px;text-align:center;color:var(--muted);font-size:12px;flex:none}
+#recov.script .rv-prompt{display:block}
+#recov.script .pr-ctl{display:flex}
+#recov.script .rv-left{justify-content:flex-start;gap:8px}
+#recov.script .rv-head{flex-direction:row;justify-content:space-between;padding:0 16px}
+#recov.script .rv-time{font-size:26px;font-weight:300}
+#recov.script .rv-state{text-align:right;font-size:13px}
+#recov.script .rv-wave{height:52px}
+#recov.script .rv-note{display:none}
+#recov.script .rv-db b{font-size:16px}
+@media (orientation:landscape) and (max-height:600px){
+  .rv-time{font-size:44px}
+  .rv-wave{height:80px}
+  .rv-left{gap:8px}
+  .rv-ctl{padding:4px 0 0;gap:22px}
+  .rv-stop{width:60px;height:60px}.rv-side{width:46px;height:46px}
+  #recov.script .rv-wave,#recov.script .rv-db{display:none}
+  #recov.script .rv-ctl{position:absolute;right:76px;bottom:calc(8px + env(safe-area-inset-bottom));padding:0;gap:12px}
+  #recov.script .pr-ctl{justify-content:flex-start;padding-left:16px}
+  #recov.script .rv-gain{margin-right:196px}
+  #recov.script .rv-ghint{display:none}
+}
+.ta{height:34vh;min-height:150px;padding:12px;font-size:15px;line-height:1.5;resize:none}
+textarea,input{user-select:text;-webkit-user-select:text}
+.sstrip{flex:none;display:flex;align-items:center;gap:8px;height:30px;margin:0 8px 6px;padding:0 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line);font-size:13px;color:var(--text);min-width:0}
+.sstrip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:left}
+.sstrip .ic{width:16px;height:16px;color:var(--amber)}
+
+
+/* ===== 0.2.8 modernized classic ===== */
+:root{--bg:#0b0c10;--panel:#121419;--raise:#1a1d24;--raise2:#232731;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12)}
+html,body{background:var(--bg)}
+.hhead{padding:18px 18px 8px}
+.logo b{font-size:22px;letter-spacing:.2px}
+.hactions{padding:12px 18px 16px;gap:12px}
+.big{height:58px;border-radius:29px;font-weight:600}
+.big.rec{box-shadow:0 8px 24px rgba(255,77,92,.28)}
+.big.sec{background:var(--raise);border:1px solid var(--line2)}
+.list{padding:0 18px}
+.lt{font-size:11.5px;letter-spacing:1.2px;margin:8px 4px 10px}
+.card{border-radius:20px;padding:14px 8px 14px 14px;background:var(--panel);border:1px solid var(--line);margin-bottom:12px}
+.card .thumb{width:46px;height:46px;border-radius:14px;background:rgba(47,224,192,.10)}
+.top{border-bottom:0;padding:6px 8px}
+.iconbtn{border-radius:21px}
+.over{height:32px;margin:0 12px;border-radius:10px;border:1px solid var(--line)}
+.wave{background:#0b0c10}
+.dbcol,.dbhead{background:var(--bg);border-color:var(--line)}
+.ruler{border-bottom-color:var(--line)}
+.zoom{gap:6px;padding:10px 10px 6px}
+.zb{height:36px;border-radius:18px;padding:0 10px;background:var(--panel);border:1px solid var(--line2)}
+.tools{background:var(--panel);border-top:0;border-radius:24px 24px 0 0;margin-top:6px}
+.tabs{margin:10px 12px 0;padding:4px;gap:4px;background:var(--bg);border-radius:14px}
+.tabs button{height:34px;border-radius:10px}
+.tabs button.on{background:var(--raise2);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.tool{border-radius:16px}
+.trans{background:var(--panel);padding-top:4px}
+.tsep{background:var(--line2)}
+.pill{border-radius:16px;border-color:var(--line2);background:rgba(18,20,25,.85)}
+.btn{border-radius:23px;border-color:var(--line2)}
+.sheet{border-radius:26px 26px 0 0;border-top:1px solid var(--line2)}
+#recov{background:var(--bg)}
+.rv-side{background:var(--raise);border:1px solid var(--line2)}
+.rv-mark{border-color:rgba(255,92,106,.55)}
+.rv-meter{border-left-color:var(--line)}
+.vm-track{border-radius:6px;background:#1a1d24}
+.field{border-radius:12px}
+
+/* ===== 0.2.9 minimal transport ===== */
+.trans{gap:6px}
+.tb,.tb.play,.tb.rec,.tb.punch{width:48px;height:48px;background:none;border:0;box-shadow:none;border-radius:14px;color:#c3c8d2}
+.tb .ic,.tb.play .ic{width:20px;height:20px}
+.tb.play{color:#ffffff}.tb.play .ic{width:24px;height:24px}
+.tb.rec{color:var(--rec)}.tb.rec .ic{width:24px;height:24px}
+.tb.punch{color:#ff7a85}
+.tb:active{background:var(--raise2)}
+.tsep{height:22px;margin:0 4px}
+.rv-ctl{gap:34px}
+.rv-side{width:56px;height:56px;background:none;border:0;color:#c3c8d2}
+.rv-mark{border:1.5px solid rgba(255,92,106,.6);color:#ff5c6a}
+.rv-stop{width:72px;height:72px;border:1.5px solid rgba(255,255,255,.55)}
+.rv-stop i{width:24px;height:24px;border-radius:5px}
+@media (orientation:landscape) and (max-height:600px){.rv-ctl{gap:22px}.rv-side{width:46px;height:46px}.rv-stop{width:60px;height:60px}#recov.script .rv-ctl{gap:12px}}
+
+.trans{position:relative;padding-top:12px}
+.trans::before{content:"";position:absolute;left:18px;right:18px;top:3px;height:2px;border-radius:1px;background:#06070a;box-shadow:0 1px 0 rgba(255,255,255,.07),inset 0 1px 1px rgba(0,0,0,.6)}
+
+/* ===== 0.3.0 single-row scrolling tools ===== */
+@media (orientation:portrait){
+.toolrow{display:flex;gap:2px;overflow-x:auto;scroll-snap-type:x proximity;padding:8px 6px 10px;-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent)}
+.tool{flex:0 0 23%;scroll-snap-align:start}
+.tool span,.tool{white-space:nowrap}
+}
 </style>
+<style>body{-webkit-touch-callout:none}textarea,input,select{font-size:16px}</style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-<defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="0" y1="-10" x2="0" y2="210"><stop offset="0" stop-color="#b39dff"/><stop offset="1" stop-color="#6f3cff"/></linearGradient></defs>
-<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/></symbol>
-<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
-<symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></symbol>
-<symbol id="i-del" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
-<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-rec" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-punch" viewBox="0 0 24 24"><path d="M4.5 9.5A8 8 0 1 1 4 13.2"/><path d="M4 4.8v4.9h4.9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-start" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M18 6v12l-9-6z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-end" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M6 6v12l9-6z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V3.5"/><path d="m7.5 8 4.5-4.5L16.5 8"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.6" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-cut" viewBox="0 0 24 24"><circle cx="6.5" cy="17.5" r="2.8"/><circle cx="17.5" cy="17.5" r="2.8"/><path d="M8.6 15.6 18 4M15.4 15.6 6 4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6A2 2 0 0 0 13.5 4H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3.8A.8.8 0 0 1 9.8 3h4.4a.8.8 0 0 1 .8.8V5"/><path d="M9 11h6M9 15h4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4.5h6V7"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24"><path d="M7 3v14h14"/><path d="M3 7h14v14"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></symbol>
+    <symbol id="i-gap" viewBox="0 0 24 24"><path d="M4 5v14M20 5v14"/><path d="M8 12h8"/><path d="M12 9v6"/></symbol>
+    <symbol id="i-all" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" stroke-dasharray="3 2.4"/><path d="M8 12h8"/></symbol>
+    <symbol id="i-noise" viewBox="0 0 24 24"><path d="M3 12h2l1.5-3 2 7 2-11 2 13 2-9 1.5 5 1.5-2H21"/><path d="M4 21 20 3" stroke-width="1.6" opacity=".55"/></symbol>
+    <symbol id="i-breath" viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15.5a2.5 2.5 0 1 1-2.5 2.5"/><path d="M3 16h7a2.5 2.5 0 1 1-2.5 2.5"/></symbol>
+    <symbol id="i-heal" viewBox="0 0 24 24"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)"/><circle cx="10.6" cy="12" r=".9" fill="currentColor" stroke="none"/><circle cx="13.4" cy="12" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="10.6" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="13.4" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-spec" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 15.5h2.5M7 12h5M7 8.5h2M12.5 15.5h4.5M14.5 8.5h2.5M15.5 12h1.5"/></symbol>
+<symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V6a1.5 1.5 0 0 1 3 0v7"/><path d="M8 13l-1.6-1.6a1.6 1.6 0 0 0-2.3 2.2L8 18.5c1.3 1.6 2.8 2.5 5 2.5h1a4 4 0 0 0 4-4v-4"/></symbol>
+    <symbol id="i-chl" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-chr" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-storage" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6"/><path d="M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.8-2.5 2.2-2.5 3.8"/><path d="M12 17.2v.1"/></symbol>
+    <symbol id="i-hum" viewBox="0 0 24 24"><path d="M2.5 12c1.6-4.5 3.2-4.5 4.8 0s3.2 4.5 4.7 0 3.2-4.5 4.8 0 3.1 4.5 4.7 0"/><path d="M5 20 19 4" stroke-width="1.6" opacity=".55"/></symbol>
+    <symbol id="i-click" viewBox="0 0 24 24"><path d="M2.5 13h6l1.5-2 1.5 9 2-17 1.5 10H21.5"/></symbol>
+    <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M3 12h5M16 12h5"/><path d="m6 9 3 3-3 3M18 9l-3 3 3 3"/><path d="M12 6v12" stroke-dasharray="2 2.2"/></symbol>
+    <symbol id="i-gain" viewBox="0 0 24 24"><path d="M3 19h18V5z"/><path d="M14 12v4M12 14h4"/></symbol>
+    <symbol id="i-norm" viewBox="0 0 24 24"><path d="M3 5h18" stroke-dasharray="2.5 2.5"/><path d="M6 20v-6M10 20v-9M14 20v-12M18 20v-8"/></symbol>
+    <symbol id="i-fin" viewBox="0 0 24 24"><path d="M3 20C10 20 14 13 21 4"/><path d="M3 20h18" opacity=".45"/></symbol>
+    <symbol id="i-fout" viewBox="0 0 24 24"><path d="M3 4c7 9 11 16 18 16"/><path d="M3 20h18" opacity=".45"/></symbol>
+    <symbol id="i-meter" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5" y="11" width="3" height="6" rx=".6"/><rect x="10.5" y="6" width="3" height="11" rx=".6"/><rect x="16" y="9" width="3" height="8" rx=".6"/></symbol>
+    <symbol id="i-zin" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6M10.5 7.8v5.4M7.8 10.5h5.4"/></symbol>
+    <symbol id="i-zout" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6M7.8 10.5h5.4"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M3 9V4h5M21 9V4h-5M3 15v5h5M21 15v5h-5"/></symbol>
+    <symbol id="i-zsel" viewBox="0 0 24 24"><path d="M5 5h3M5 5v14M5 19h3M19 5h-3M19 5v14M19 19h-3"/><path d="M10 12h4"/></symbol>
+    <symbol id="i-vz" viewBox="0 0 24 24"><path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.2h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h11M4 18h8"/><path d="m17 15 3 2.5-3 2.5"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></symbol>
+    <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6" rx="1.5"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M5 19.5h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+    <symbol id="i-logo" viewBox="30 -12 140 224"><path d="M40 120 A20 20 0 0 0 60 100 V18.2 A20 20 0 0 1 100 18.2 V95.7 M100 104.3 V181.8 A20 20 0 0 0 140 181.8 V100 A20 20 0 0 1 160 80" fill="none" stroke="url(#lg)" stroke-width="15.2"/></symbol>
+    <linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="0" y1="-10" x2="0" y2="210"><stop offset="0" stop-color="#b39dff"/><stop offset="1" stop-color="#6f3cff"/></linearGradient>
+  </defs>
 </svg>
-<div class="wrap">
-<header>
-<svg viewBox="30 -12 140 224" width="24" height="38" role="img" aria-label="Auxera"><path d="M40 120 A20 20 0 0 0 60 100 V18.2 A20 20 0 0 1 100 18.2 V95.7 M100 104.3 V181.8 A20 20 0 0 0 140 181.8 V100 A20 20 0 0 1 160 80" fill="none" stroke="url(#lg)" stroke-width="15.2"/></svg>
-<h1>Auxera <small>Web deneme sürümü · kayıt çekirdeği</small></h1>
-</header>
 
-<div class="banner" id="recovBanner" hidden></div>
-
-<section class="card" id="recCard" aria-label="Kayıt">
-<h2>Kayıt</h2>
-<div class="row" style="justify-content:space-between;align-items:flex-end">
-<div class="timer" id="timer">00:00,0</div>
-<div class="stats" style="flex-direction:column;gap:2px;text-align:right"><span>tepe <b id="pk">−∞</b> dB</span><span>en yüksek <b id="pkMax">−∞</b> dB</span></div>
-</div>
-<div style="margin-top:12px">
-<div class="meter" id="meter"><div class="tgt" id="tgt"></div><b id="mb"></b><i id="mh"></i></div>
-<div class="scale"><span>−60</span><span>−40</span><span>−20</span><span>−9 / −6</span><span>0 dB</span></div>
-</div>
-<canvas id="live" style="margin-top:12px"></canvas>
-<div class="ctl">
-<button class="round" id="bMon" aria-label="Mikrofonu aç / seviye kontrolü"><svg class="ic"><use href="#i-play"/></svg></button>
-<button class="recbtn" id="bRec" aria-label="Kayda başla"><i></i></button>
-<button class="round mark" id="bMark" aria-label="Hata işareti koy" disabled><svg class="ic"><use href="#i-flag"/></svg><span id="markN" hidden>0</span></button>
-</div>
-<p class="hint" id="recHint">Kayıt sırasında hata işareti: bayrağa dokunun ya da Bluetooth pedal / klavye (boşluk, →, Page Down, Enter).</p>
+<!-- ================= HOME ================= -->
+<section id="home" class="screen">
+  <div class="hhead">
+    <div class="logo"><svg width="30" height="48" role="img" aria-label="Auxera logosu"><use href="#i-logo"/></svg><div><b>Auxera</b><small>Ses kayıt ve düzenleme stüdyosu</small></div></div>
+    <button class="iconbtn" id="hSettings" aria-label="Ayarlar"><svg class="ic"><use href="#i-sliders"/></svg></button>
+  </div>
+  <div class="hactions">
+    <button class="big rec" id="hNew"><svg class="ic"><use href="#i-mic"/></svg>Yeni kayıt</button>
+    <button class="big sec" id="hOpen"><svg class="ic"><use href="#i-folder"/></svg>Dosya aç</button>
+  </div>
+  <div class="hsearch hide" id="hSearchW"><input class="field" id="hSearch" type="search" placeholder="Kayıtlarda ara…" aria-label="Kayıtlarda ara"></div>
+  <div class="list" id="plist"></div>
+  <div class="hfoot num" id="hFoot"></div>
 </section>
 
-<section class="card" aria-label="Alımlar">
-<h2>Alımlar</h2>
-<div id="takes"><div class="empty">Henüz kayıt yok.</div></div>
-<div id="player" hidden>
-<canvas id="tw"></canvas>
-<div class="stats" style="margin-bottom:8px"><span id="pInfo"></span></div>
-<div class="row" style="justify-content:space-between">
-<div class="stats"><b id="pTime" style="font-size:17px">00:00,0</b></div>
-<div class="row">
-<button class="ibtn" id="pPlay" aria-label="Çal"><svg class="ic"><use href="#i-play"/></svg></button>
-<button class="ibtn" id="pWav" aria-label="WAV olarak dışa aktar"><svg class="ic"><use href="#i-dl"/></svg></button>
-</div>
-</div>
-</div>
+<!-- ================= EDITOR ================= -->
+<section id="editor" class="screen hide">
+  <div class="top">
+    <button class="iconbtn" id="eBack" aria-label="Geri"><svg class="ic"><use href="#i-back"/></svg></button>
+    <button class="pname" id="eName"><b id="eTitle">Kayıt</b><small id="eSub">48 kHz · mono</small></button>
+    <button class="iconbtn" id="eUndo" aria-label="Geri al"><svg class="ic"><use href="#i-undo"/></svg></button>
+    <button class="iconbtn" id="eRedo" aria-label="Yinele"><svg class="ic"><use href="#i-redo"/></svg></button>
+    <button class="iconbtn" id="eExport" aria-label="Dışa aktar"><svg class="ic"><use href="#i-export"/></svg></button>
+    <button class="iconbtn" id="eMore" aria-label="Daha fazla"><svg class="ic"><use href="#i-more"/></svg></button>
+  </div>
+  <div class="info">
+    <div class="clockwrap"><button class="lname" id="eNameL"></button><div class="clock num" id="clock">00:00.00</div><div class="lvl num" id="lvlTxt"></div></div>
+    <div class="selinfo num" id="selinfo"></div>
+  </div>
+  <div class="over" id="over"><canvas id="overCv"></canvas></div>
+  <div class="wavebox">
+    <div class="wcol">
+      <div class="mstrip hide" id="mstrip"><svg class="ic flag"><use href="#i-flag"/></svg><span class="mi num" id="mInfo"></span><button id="mPrev" aria-label="Önceki işaret"><svg class="ic"><use href="#i-chl"/></svg></button><button id="mNext" aria-label="Sonraki işaret"><svg class="ic"><use href="#i-chr"/></svg></button><button id="mSel">Bölümü seç</button><button id="mDel" aria-label="İşareti kaldır"><svg class="ic"><use href="#i-x"/></svg></button></div>
+      <button class="sstrip hide" id="sstrip"><svg class="ic"><use href="#i-text"/></svg><span id="sstripTxt"></span></button>
+      <div class="rrow"><div class="ruler" id="ruler"><canvas id="rulerCv"></canvas></div><button class="dbhead num" id="vmVal" aria-label="Seviye / clip">dB</button></div>
+      <div class="wrow">
+        <div class="wave" id="wave"><canvas id="waveCv" role="img" aria-label="Dalga formu"></canvas>
+          <div class="vz"><button class="pill" id="vzBtn" aria-label="Dikey yakınlaştırma"><svg class="ic" style="width:15px;height:15px"><use href="#i-vz"/></svg><span id="vzTxt">×1</span></button><button class="pill" id="panBtn" aria-label="Kaydırma modu" aria-pressed="false"><svg class="ic" style="width:17px;height:17px"><use href="#i-hand"/></svg></button><button class="pill" id="specBtn" aria-label="Spektral görünüm" aria-pressed="false"><svg class="ic" style="width:17px;height:17px"><use href="#i-spec"/></svg></button></div>
+          <div class="empty-wave hide" id="emptyWave"><div>Henüz ses yok.<div class="ew-btns"><button class="btn pri" id="ewRec"><svg class="ic"><use href="#i-rec"/></svg>Kayda başla</button><button class="btn" id="ewScript"><svg class="ic"><use href="#i-text"/></svg>Önce metin ekle</button></div><small>Metin eklerseniz kayıt ekranında teleprompter olarak akar.</small></div></div>
+        </div>
+        <div class="dbcol"><canvas id="dbCv"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="zoom">
+    <button class="zb" id="zOut"><svg class="ic"><use href="#i-zout"/></svg></button>
+    <button class="zb" id="zIn"><svg class="ic"><use href="#i-zin"/></svg></button>
+    <button class="zb" id="zFit"><svg class="ic"><use href="#i-fit"/></svg>Tümü</button>
+    <button class="zb" id="zSel"><svg class="ic"><use href="#i-zsel"/></svg>Seçime</button>
+    <button class="zb" id="zAll"><svg class="ic"><use href="#i-all"/></svg>Tümünü seç</button>
+  </div>
+  <div class="tools">
+    <div class="tabs" id="tabs">
+      <button data-t="edit" class="on">Düzenle</button>
+      <button data-t="clean">Temizle</button>
+      <button data-t="level">Seviye</button>
+    </div>
+    <div class="toolrow" id="toolrow"></div>
+  </div>
+  <div class="trans">
+    <button class="tb" id="tStart" aria-label="Başa"><svg class="ic"><use href="#i-start"/></svg></button>
+    <button class="tb play" id="tPlay" aria-label="Çal"><svg class="ic"><use href="#i-play" id="tPlayIc"/></svg></button>
+    <button class="tb" id="tEnd" aria-label="Sona"><svg class="ic"><use href="#i-end"/></svg></button>
+    <span class="tsep"></span>
+    <button class="tb rec" id="tRec" aria-label="Kaydet"><svg class="ic"><use href="#i-rec"/></svg></button>
+    <button class="tb punch" id="tPunch" aria-label="Düzeltme kaydı"><svg class="ic"><use href="#i-punch"/></svg></button>
+  </div>
 </section>
 
-<section class="card" aria-label="Tanılama">
-<h2>Bu cihazda durum</h2>
-<dl class="diag" id="diag"></dl>
-<div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">
-<button class="btn" id="bPersist">Kayıtları kalıcı yap</button>
-<button class="btn" id="bReport"><svg class="ic"><use href="#i-copy"/></svg>Raporu kopyala</button>
-</div>
-<p class="hint" style="text-align:left" id="persistHint"></p>
+<!-- ================= RECORD OVERLAY ================= -->
+<section id="recov" class="hide">
+  <div class="rv-top">
+    <div class="rv-mode"><span class="dot blink" id="rvDot"></span><span id="rvMode">Kayıt</span></div>
+    <div class="rv-tr"><button class="pill rv-txt" id="rvScript"><svg class="ic" style="width:15px;height:15px"><use href="#i-text"/></svg>Metin ekle</button><div class="rv-src" id="rvSrc"></div></div>
+  </div>
+  <div class="rv-main">
+    <div class="rv-left">
+      <div class="rv-head"><div class="rv-time num" id="rvTime">00:00.0</div><div class="rv-state" id="rvState">Kaydediliyor</div></div>
+      <div class="rv-prompt" id="rvPrompt"><div class="pr-inner" id="prInner"></div><div class="pr-mark" id="prMark"></div></div>
+      <div class="pr-ctl" id="prCtl">
+        <button class="pill" id="prSlow" aria-label="Yavaşlat"><svg class="ic" style="width:16px;height:16px"><use href="#i-minus"/></svg></button>
+        <button class="pill" id="prRun"><svg class="ic" style="width:16px;height:16px"><use href="#i-pause" id="prRunIc"/></svg><span id="prRunTxt">Akış</span></button>
+        <button class="pill" id="prFast" aria-label="Hızlandır"><svg class="ic" style="width:16px;height:16px"><use href="#i-plus"/></svg></button>
+        <span class="num" id="prInfo"></span>
+        <button class="pill" id="prSmall" aria-label="Yazıyı küçült">A−</button>
+        <button class="pill" id="prBig" aria-label="Yazıyı büyüt">A+</button>
+      </div>
+      <div class="rv-wave"><canvas id="rvCv"></canvas></div>
+      <div class="rv-gain"><span>Gain</span><input type="range" id="rvGain" min="-12" max="30" step="0.5" value="0"><b class="num" id="rvGainV">+0,0 dB</b></div>
+      <div class="rv-ghint" id="rvGHint"></div>
+      <div class="rv-db num"><span><b id="rvPk">−∞</b>dB tepe</span><span>en yüksek <b id="rvMax" style="font-size:15px">−∞</b>dB</span><span>RMS <b id="rvRms" style="font-size:15px">−∞</b>dB</span></div>
+      <div class="rv-free num" id="rvFree"></div>
+      <div class="rv-note" id="rvNote"></div>
+    </div>
+    <div class="rv-meter" id="rvMeter" role="meter" aria-label="Giriş seviyesi" aria-valuemin="-60" aria-valuemax="0" aria-valuenow="-60">
+      <button class="vm-clip" id="rmClip" aria-label="Clip göstergesini sıfırla">CLIP</button>
+      <div class="vm-val num" id="rmVal">−∞</div>
+      <div class="vm-body"><div class="vm-scale" id="rmScale"></div><div class="vm-track" id="rmTrack"><b class="pk" id="rmPk"></b><b id="rmRms"></b><u id="rmHold"></u></div></div>
+    </div>
+  </div>
+  <div class="rv-ctl">
+    <button class="rv-side" id="rvPause" aria-label="Duraklat"><svg class="ic"><use href="#i-pause" id="rvPauseIc"/></svg></button>
+    <button class="rv-stop" id="rvStop" aria-label="Durdur"><i></i></button>
+    <button class="rv-side rv-mark" id="rvMark" aria-label="Hata işareti"><svg class="ic"><use href="#i-flag"/></svg><b class="num" id="rvMarkN"></b></button>
+  </div>
 </section>
-</div>
-<div class="toast" id="toast" role="status"></div>
 
-<script>
-'use strict';
+<button class="abchip hide" id="abChip"></button>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div class="sh-h"><h3 id="shTitle"></h3><button class="iconbtn" id="shClose"><svg class="ic"><use href="#i-x"/></svg></button></div><div class="sh-b" id="shBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="engine.js"></script>
+<script type="text/plain" id="appMain">
+"use strict";
+// =====================================================================================
+// helpers
+// =====================================================================================
 const $ = id => document.getElementById(id);
-const DB_NAME = 'auxera-web', CHUNK_SEC = 1;
-const UA = navigator.userAgent;
-const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-
-function toast(t, ms){ const e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('on'), ms||2400); }
-function fmt(s){ s=Math.max(0,s); const m=Math.floor(s/60), r=s-m*60; return String(m).padStart(2,'0')+':'+r.toFixed(1).padStart(4,'0').replace('.',','); }
-function dbTxt(v){ return v<=-90 ? '−∞' : (v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',','); }
-const lin2db = a => a>0 ? 20*Math.log10(a) : -120;
-
-// ---------------- IndexedDB ----------------
-let dbp = null;
-function idb(){
-  if(dbp) return dbp;
-  dbp = new Promise((res, rej)=>{
-    const r = indexedDB.open(DB_NAME, 1);
-    r.onupgradeneeded = ()=>{ const d=r.result; d.createObjectStore('takes',{keyPath:'id'}); d.createObjectStore('chunks'); };
-    r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error);
-  });
-  return dbp;
-}
-async function tx(stores, mode, fn){
-  const d = await idb();
-  return new Promise((res, rej)=>{
-    const t = d.transaction(stores, mode); let out;
-    Promise.resolve(fn(t)).then(v=>out=v);
-    t.oncomplete = ()=>res(out); t.onerror = ()=>rej(t.error); t.onabort = ()=>rej(t.error);
-  });
-}
-const req = r => new Promise((res, rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
-const putTake = take => tx(['takes'],'readwrite', t=>{ t.objectStore('takes').put(take); });
-const putChunk = (id, i, f32) => tx(['chunks'],'readwrite', t=>{ t.objectStore('chunks').put(f32.buffer, id+'/'+String(i).padStart(6,'0')); });
-const allTakes = () => tx(['takes'],'readonly', t=>req(t.objectStore('takes').getAll()));
-async function loadSamples(take){
-  const keys = IDBKeyRange.bound(take.id+'/', take.id+'/~');
-  const bufs = await tx(['chunks'],'readonly', t=>req(t.objectStore('chunks').getAll(keys)));
-  let n=0; for(const b of bufs) n+=b.byteLength/4;
-  const out = new Float32Array(n); let o=0;
-  for(const b of bufs){ const f=new Float32Array(b); out.set(f,o); o+=f.length; }
+const AX = window.AX;
+function J(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+function ic(name, cls){ return `<svg class="ic ${cls||''}"><use href="#i-${name}"/></svg>`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function clamp(v,a,b){ return v<a?a:v>b?b:v; }
+function b64s(str){ // base64 -> Int16Array
+  if(!str) return new Int16Array(0);
+  const bin = atob(str); const n = bin.length>>1; const out = new Int16Array(n);
+  for(let i=0;i<n;i++){ let v = bin.charCodeAt(2*i) | (bin.charCodeAt(2*i+1)<<8); out[i] = v>32767? v-65536 : v; }
   return out;
 }
-async function deleteTake(id){
-  await tx(['takes','chunks'],'readwrite', t=>{ t.objectStore('takes').delete(id); t.objectStore('chunks').delete(IDBKeyRange.bound(id+'/', id+'/~')); });
+function fmtT(samples, sr, prec){
+  if(prec==null) prec=2;
+  let t = Math.max(0, samples/sr);
+  const h = Math.floor(t/3600); t -= h*3600;
+  const m = Math.floor(t/60); t -= m*60;
+  let s = t.toFixed(prec); if(t<10) s = '0'+s;
+  if(s.startsWith('60')) s = (prec? '59.'+'9'.repeat(prec):'59');
+  const mm = (m<10?'0':'')+m;
+  return (h? h+':' : '') + mm + ':' + s.replace('.', ',');
 }
+function fmtDur(samples, sr){
+  const t = samples/sr;
+  if(t<60) return t.toFixed(1).replace('.',',')+' sn';
+  const m = Math.floor(t/60), s = Math.round(t%60);
+  if(m<60) return m+' dk '+s+' sn';
+  return Math.floor(m/60)+' sa '+(m%60)+' dk';
+}
+function fmtBytes(b){ if(b<1024*1024) return Math.max(1,Math.round(b/1024))+' KB'; if(b<1024*1024*1024) return (b/1048576).toFixed(1).replace('.',',')+' MB'; return (b/1073741824).toFixed(2).replace('.',',')+' GB'; }
+function fmtDate(ms){ const d = new Date(ms); const p = n=>(n<10?'0':'')+n; return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function dbs(v, d){ if(v==null||v<-200) return '−∞'; return (v>0?'+':'')+v.toFixed(d==null?1:d).replace('.',',').replace('-','−'); }
+let toastT=0;
+function toast(msg, ms){ const t=$('toast'); t.classList.toggle('top', $('sheet').classList.contains('on')); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), ms||2600); }
+function vib(){ try{ navigator.vibrate && navigator.vibrate(12); }catch(e){} }
 
-// ---------------- audio input ----------------
-const A = { ctx:null, stream:null, src:null, node:null, track:null, settings:null, monitoring:false,
-  rec:null,                      // {id, start, n, buf:[], bufN, idx, marks:[], peakMax}
-  peakHold:-120, peakHoldT:0, livePk:[], lastPk:-120 };
+// =====================================================================================
+// state
+// =====================================================================================
+const S = {
+  screen:'home', st:null, len:0, sr:48000,
+  start:0, spp:100,        // view: first visible sample, samples per CSS pixel
+  cursor:0, sel:null,      // sel = {a,b}
+  playing:false, ppos:-1, vz:1, tab:'edit',
+  breath:null,             // {regions:[{a,b,on}], idx}
+  settings:{}, jobCb:null, permCb:null,
+  marks:[], mIdx:-1, markSel:null, pan:false, busy:false, ab:false, hq:''
+};
+function loadSettings(){ S.settings = J(AX.settings()) || {}; }
 
-const WORKLET = `class Cap extends AudioWorkletProcessor{process(i){const c=i[0];if(c&&c.length){const a=c[0];let o;if(c.length>1){o=new Float32Array(a.length);for(let k=0;k<c.length;k++){const x=c[k];for(let j=0;j<a.length;j++)o[j]+=x[j]/c.length;}}else o=a.slice(0);this.port.postMessage(o,[o.buffer]);}return true;}}registerProcessor('cap',Cap);`;
-
-async function openInput(){
-  if(A.ctx && A.stream) return true;
-  try{
-    A.stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:1}}, video:false});
-  }catch(e){
-    toast(e && e.name==='NotAllowedError' ? 'Mikrofon izni verilmedi.' : 'Mikrofon açılamadı: '+(e && e.message || e), 4000);
-    return false;
+// =====================================================================================
+// home
+// =====================================================================================
+function showScreen(name){
+  S.screen = name;
+  $('home').classList.toggle('hide', name!=='home');
+  $('editor').classList.toggle('hide', name!=='editor');
+  if(name==='editor'){ mstripUpd(); panUpd(); requestAnimationFrame(()=>{ resize(); fit(); draw(true); }); }
+}
+function renderHome(){
+  const all = J(AX.projects()) || [];
+  const el = $('plist');
+  $('hSearchW').classList.toggle('hide', all.length < 4);
+  const q = (S.hq||'').trim().toLocaleLowerCase('tr');
+  const list = q ? all.filter(p=>p.name.toLocaleLowerCase('tr').includes(q)) : all;
+  const stg = J(AX.storage ? AX.storage() : '{}') || {};
+  $('hFoot').textContent = all.length && stg.free!=null ? 'Kayıtlar '+fmtBytes(stg.used||0)+' · Boş alan '+fmtBytes(stg.free) : '';
+  if(!list.length && all.length){ el.innerHTML = `<div class="empty"><div>“${esc(S.hq)}” ile eşleşen kayıt yok.</div></div>`; return; }
+  if(!list.length){
+    el.innerHTML = `<div class="empty"><svg class="ic" viewBox="0 0 24 24"><use href="#i-mic"/></svg><div><b style="color:var(--text)">Henüz kayıt yok</b><br>“Yeni kayıt” ile mikrofondan kayda başlayın ya da var olan bir ses dosyasını açıp düzenleyin.</div></div>`;
+    return;
   }
-  A.track = A.stream.getAudioTracks()[0];
-  A.settings = A.track.getSettings ? A.track.getSettings() : {};
-  const AC = window.AudioContext || window.webkitAudioContext;
-  A.ctx = new AC({latencyHint:'interactive'});
-  if(A.ctx.state === 'suspended') await A.ctx.resume();
-  A.src = A.ctx.createMediaStreamSource(A.stream);
-  if(A.ctx.audioWorklet){
-    const url = URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));
-    await A.ctx.audioWorklet.addModule(url);
-    A.node = new AudioWorkletNode(A.ctx, 'cap', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1]});
-    A.node.port.onmessage = e => onAudio(e.data);
-  } else {
-    A.node = A.ctx.createScriptProcessor(2048, 1, 1);
-    A.node.onaudioprocess = e => onAudio(new Float32Array(e.inputBuffer.getChannelData(0)));
+  el.innerHTML = `<div class="lt">Kayıtlar</div>` + list.map(p=>`
+    <div class="card" data-id="${esc(p.id)}">
+      <div class="thumb">${ic('noise')}</div>
+      <div class="meta"><div class="t">${esc(p.name)}</div><div class="s num">${fmtT(p.len, p.sr||48000, 1)} · ${fmtDate(p.modified)} · ${fmtBytes(p.bytes)}</div></div>
+      <button class="iconbtn" data-menu="${esc(p.id)}" aria-label="Seçenekler">${ic('more')}</button>
+    </div>`).join('');
+  el.querySelectorAll('.card').forEach(c=>{
+    c.onclick = ev=>{
+      const m = ev.target.closest('[data-menu]');
+      if(m){ ev.stopPropagation(); projMenu(m, list.find(x=>x.id===m.dataset.menu)); return; }
+      openProject(c.dataset.id);
+    };
+  });
+}
+$('hSearch').oninput = e=>{ S.hq = e.target.value; renderHome(); };
+function projMenu(anchor, p){
+  popMenu(anchor, [
+    {label:'Yeniden adlandır', icon:'edit', fn:()=>renameDialog(p.id, p.name, ()=>renderHome())},
+    {label:'Kopyasını oluştur', icon:'copy', fn:()=>{ const r = J(AX.duplicate(p.id)); if(r && r.ok!==false){ renderHome(); toast('Kopya oluşturuldu · '+fmtBytes(p.bytes)); } else toast((r&&r.error)||'Kopyalanamadı', 3500); }},
+    {label:'Sil', icon:'trash', dan:true, fn:()=>confirmDialog('Kayıt silinsin mi?', `“${p.name}” kalıcı olarak silinecek.`, 'Sil', ()=>{ AX.remove(p.id); renderHome(); toast('Silindi'); })}
+  ]);
+}
+function openProject(id){
+  const r = J(AX.open(id));
+  if(!r || r.ok===false){ toast((r&&r.error)||'Açılamadı'); return; }
+  enterEditor(r);
+}
+function enterEditor(st){
+  setState(st);
+  S.cursor = 0; S.sel = null; S.breath = null; S.ppos=-1;
+  showScreen('editor');
+  specCache = null; specPend = null; setSpec((()=>{try{return localStorage.getItem('spec')==='1'}catch(e){return false}})());
+  loadScriptSent();
+}
+function newRecording(){
+  const n = 'Kayıt ' + fmtDate(Date.now()).replace(/\./g,'-').replace(' ', ' ');
+  const r = J(AX.create(n));
+  if(!r || r.ok===false){ toast('Proje oluşturulamadı'); return; }
+  enterEditor(r);
+}
+$('ewRec').onclick = ()=>startRecord('insert');
+$('ewScript').onclick = ()=>sheetScript();
+$('hNew').onclick = newRecording;
+$('hOpen').onclick = ()=>AX.importFile();
+$('hSettings').onclick = ()=>openSettings();
+
+// =====================================================================================
+// editor state
+// =====================================================================================
+function setState(st){
+  if(!st || st.open===false) return;
+  S.st = st; S.len = st.len||0; S.sr = st.sr||48000;
+  $('eTitle').textContent = st.name; $('eNameL').textContent = st.name;
+  $('eSub').textContent = (S.sr/1000).toString().replace('.',',')+' kHz · '+(st.bps===4?'32-bit':'16-bit')+' · '+fmtDur(S.len, S.sr);
+  $('eUndo').disabled = !st.canUndo; $('eRedo').disabled = !st.canRedo;
+  $('emptyWave').classList.toggle('hide', S.len>0);
+  if(S.cursor > S.len) S.cursor = S.len;
+  if(S.sel){ S.sel.a = Math.min(S.sel.a, S.len); S.sel.b = Math.min(S.sel.b, S.len); if(S.sel.b-S.sel.a < 1) S.sel=null; }
+  overDirty = true;
+  loadMarks();
+  updateButtons();
+}
+function loadMarks(){
+  S.marks = (AX.marks && J(AX.marks())) || [];
+  if(S.mIdx >= S.marks.length) S.mIdx = S.marks.length - 1;
+  mstripUpd();
+}
+function mstripUpd(){
+  const el = $('mstrip'), show = S.screen==='editor' && S.marks.length>0;
+  if(el.classList.contains('hide') === show){ el.classList.toggle('hide', !show); requestAnimationFrame(()=>{ resize(); draw(true); }); }
+  if(!show) return;
+  const i = S.mIdx;
+  $('mInfo').textContent = i>=0 ? `İşaret ${i+1}/${S.marks.length} · ${fmtT(S.marks[i], S.sr, 1)}` : `${S.marks.length} hata işareti`;
+  $('mSel').disabled = $('mDel').disabled = i<0;
+}
+function gotoMark(i){
+  if(!S.marks.length) return;
+  i = clamp(i, 0, S.marks.length-1);
+  S.mIdx = i; const m = S.marks[i];
+  stopPlay(); S.cursor = m; S.sel = null; S.markSel = null;
+  const vis = W*S.spp;
+  if(m < S.start + vis*0.1 || m > S.start + vis*0.9){ S.start = m - vis*0.6; clampView(); }
+  updateButtons(); draw(); mstripUpd();
+}
+$('mNext').onclick = ()=>{
+  if(!S.marks.length) return;
+  let i = S.mIdx >= 0 ? S.mIdx + 1 : S.marks.findIndex(m=>m > S.cursor + S.sr*0.01);
+  if(i < 0 || i >= S.marks.length){ toast('Son işaret'); return; }
+  gotoMark(i);
+};
+$('mPrev').onclick = ()=>{
+  if(!S.marks.length) return;
+  let i = S.mIdx >= 0 ? S.mIdx - 1 : (()=>{ let k=-1; S.marks.forEach((m,j)=>{ if(m < S.cursor - S.sr*0.01) k=j; }); return k; })();
+  if(i < 0){ toast('İlk işaret'); return; }
+  gotoMark(i);
+};
+$('mSel').onclick = ()=>{
+  const m = S.marks[S.mIdx]; if(m==null) return;
+  const r = J(AX.markRegion(m));
+  if(!r || r.ok===false){ toast((r&&r.error)||'Bulunamadı'); return; }
+  S.sel = {a:r.a, b:r.b}; S.cursor = r.a; S.markSel = {a:r.a, b:r.b, m};
+  const len = r.b - r.a; S.spp = clamp(len*1.6/W, minSpp(), maxSpp()); S.start = r.a - len*0.3; clampView();
+  if(S.tab!=='edit'){ S.tab='edit'; renderTools(); }
+  updateButtons(); draw(); vib();
+  toast('Hatalı okuma seçildi · dinleyip “Sil” ile çıkarın. Kenarları sürükleyerek düzeltebilirsiniz.', 3800);
+};
+$('mDel').onclick = ()=>{
+  const m = S.marks[S.mIdx]; if(m==null) return;
+  S.marks = J(AX.delMark(m, S.sr*0.06)) || [];
+  S.mIdx = Math.min(S.mIdx, S.marks.length-1);
+  mstripUpd(); draw(); toast('İşaret kaldırıldı');
+};
+function parseT(str){
+  str = String(str).trim().replace(',', '.');
+  if(!str) return NaN;
+  let t = 0;
+  for(const part of str.split(':')){ if(part==='' || isNaN(+part)) return NaN; t = t*60 + (+part); }
+  return t;
+}
+function sheetSel(){
+  const f = v=>fmtT(v, S.sr, 3);
+  const s = selOrNull();
+  if(!s){
+    openSheet('Konuma git', `<div class="row" style="margin-top:0"><label>Zaman (dk:sn,ms)</label></div><input class="field num" id="gT" inputmode="decimal" value="${f(S.cursor)}">
+      <div class="btns"><button class="btn pri" id="gGo">Git</button></div>`, null, true);
+    $('gGo').onclick = ()=>{
+      const t = parseT($('gT').value);
+      if(isNaN(t)){ toast('Geçersiz zaman · örnek: 1:23,450'); return; }
+      S.cursor = clamp(Math.round(t*S.sr), 0, S.len); S.sel = null;
+      const vis = W*S.spp; S.start = S.cursor - vis/2; clampView(); closeSheet(); updateButtons(); draw();
+    };
+    return;
   }
-  const mute = A.ctx.createGain(); mute.gain.value = 0;
-  A.src.connect(A.node); A.node.connect(mute); mute.connect(A.ctx.destination);
-  A.track.onended = ()=>{ if(A.rec) stopRec('Mikrofon bağlantısı kesildi; kayıt kaydedildi.'); closeInput(); };
-  renderDiag();
+  const nud = e=>`<div class="nud"><button data-e="${e}" data-d="-100">−100</button><button data-e="${e}" data-d="-10">−10</button><input class="field num" id="s${e.toUpperCase()}" inputmode="decimal" value="${f(s[e])}"><button data-e="${e}" data-d="10">+10</button><button data-e="${e}" data-d="100">+100</button></div>`;
+  openSheet('Seçimi ayarla', `
+    <div class="row" style="margin-top:0"><label>Başlangıç</label></div>${nud('a')}
+    <div class="row"><label>Bitiş</label></div>${nud('b')}
+    <div class="row"><label>Süre</label><span class="v num" id="sLenV"></span></div>
+    <div class="hint">Düğmeler milisaniye kaydırır; zamanı yazıp “Tamam”a da basabilirsiniz. Kesme, silme ve kopyalamada kenarlar en yakın sıfır geçişe (±3 ms) çekilir, tık oluşmaz.</div>
+    <div class="btns"><button class="btn" id="sPlay">${ic('play')}Dinle</button><button class="btn pri" id="sOk">Tamam</button></div>`, null, true);
+  const show = ()=>{ $('sA').value = f(S.sel.a); $('sB').value = f(S.sel.b); $('sLenV').textContent = f(S.sel.b - S.sel.a); updateButtons(); draw(); };
+  show();
+  $('shBody').querySelectorAll('.nud button').forEach(b=>b.onclick = ()=>{
+    const d = Math.round(+b.dataset.d * S.sr / 1000);
+    if(b.dataset.e==='a') S.sel.a = clamp(S.sel.a + d, 0, S.sel.b - 1); else S.sel.b = clamp(S.sel.b + d, S.sel.a + 1, S.len);
+    S.cursor = S.sel.a; show();
+  });
+  const typed = ()=>{
+    const a = parseT($('sA').value), b = parseT($('sB').value);
+    if(isNaN(a) || isNaN(b)){ toast('Geçersiz zaman · örnek: 1:23,450'); return false; }
+    const A = clamp(Math.round(a*S.sr), 0, S.len), B = clamp(Math.round(b*S.sr), 0, S.len);
+    if(B - A < 1){ toast('Bitiş, başlangıçtan sonra olmalı'); return false; }
+    S.sel = {a:A, b:B}; S.cursor = A; show(); return true;
+  };
+  $('sA').onchange = typed; $('sB').onchange = typed;
+  $('sPlay').onclick = ()=>{ if(typed()) startPlay(S.sel.a, S.sel.b); };
+  $('sOk').onclick = ()=>{ if(typed()) closeSheet(); };
+}
+$('selinfo').onclick = ()=>{ if(S.len>0) sheetSel(); };
+function refresh(st){ if(st) setState(st); else setState(J(AX.state())); clampView(); draw(true); }
+function applyResult(r, okMsg){
+  if(!r){ toast('Hata'); return false; }
+  if(r.ok===false){ toast(r.error||'Yapılamadı'); return false; }
+  setState(r);
+  if(r.cursor!=null){ S.cursor = r.cursor; S.sel = null; }
+  if(r.selA!=null){ S.sel = {a:r.selA, b:r.selB}; S.cursor = r.selA; }
+  clampView(); draw(true);
+  if(okMsg) toast(okMsg);
   return true;
 }
-function closeInput(){
-  try{ A.stream && A.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
-  try{ A.ctx && A.ctx.close(); }catch(e){}
-  A.ctx=A.stream=A.src=A.node=A.track=null; A.monitoring=false; setMonBtn();
+function selOrNull(){ return S.sel && S.sel.b-S.sel.a>0 ? S.sel : null; }
+function targetRange(){ const s = selOrNull(); return s? [s.a, s.b] : [0, 0]; }
+function targetLabel(){ const s = selOrNull(); return s? `<span class="target">Hedef: <b>Seçim</b> · ${fmtDur(s.b-s.a, S.sr)}</span>` : `<span class="target">Hedef: <b>Tüm kayıt</b> · ${fmtDur(S.len, S.sr)}</span>`; }
+function updateButtons(){
+  const has = S.len>0, sel = !!selOrNull();
+  $('tPunch').disabled = !has;
+  document.querySelectorAll('[data-need]').forEach(b=>{
+    const n = b.dataset.need;
+    b.disabled = (n==='audio' && !has) || (n==='sel' && !sel) || (n==='clip' && !(S.st && S.st.clip>0));
+  });
+  $('zSel').disabled = !sel;
+  updateInfo();
+}
+function updateInfo(){
+  sstripUpd(false);
+  const t = S.playing && S.ppos>=0 ? S.ppos : S.cursor;
+  $('clock').textContent = fmtT(t, S.sr);
+  $('clock').classList.toggle('play', S.playing);
+  const s = selOrNull();
+  const cvl = s ? `Dalga formu. Seçim ${fmtT(s.a,S.sr,2)} ile ${fmtT(s.b,S.sr,2)} arası.` : `Dalga formu. İmleç ${fmtT(S.cursor,S.sr,2)}, toplam ${fmtT(S.len,S.sr,1)}.`;
+  if(wcv.getAttribute('aria-label') !== cvl) wcv.setAttribute('aria-label', cvl);
+  $('selinfo').innerHTML = s ? `<span>Başlangıç</span><span>${fmtT(s.a,S.sr,3)}</span><span>Bitiş</span><span>${fmtT(s.b,S.sr,3)}</span><span>Süre</span><span>${fmtT(s.b-s.a,S.sr,3)}</span>`
+                             : `<span>Uzunluk</span><span>${fmtT(S.len,S.sr,2)}</span>`;
 }
 
-function onAudio(f){
-  let pk=0; for(let i=0;i<f.length;i++){ const v=f[i]<0?-f[i]:f[i]; if(v>pk) pk=v; }
-  const d = lin2db(pk);
-  A.lastPk = Math.max(A.lastPk, d);
-  const r = A.rec;
-  if(r){
-    r.buf.push(f); r.bufN += f.length; r.n += f.length;
-    if(d > r.peakMax) r.peakMax = d;
-    const per = Math.round(A.ctx.sampleRate*CHUNK_SEC);
-    if(r.bufN >= per) flushRec(false);
-  }
-}
-function flushRec(final){
-  const r = A.rec; if(!r || !r.bufN) return Promise.resolve();
-  const out = new Float32Array(r.bufN); let o=0; for(const b of r.buf){ out.set(b,o); o+=b.length; }
-  r.buf=[]; r.bufN=0;
-  const i = r.idx++;
-  const meta = {id:r.id, created:r.created, sr:r.sr, n:r.n, marks:r.marks.slice(), peakMax:r.peakMax, done:!!final, name:r.name};
-  r.pending = (r.pending||Promise.resolve()).then(()=>putChunk(r.id, i, out)).then(()=>putTake(meta)).catch(e=>{ toast('Kaydedilemedi: '+(e&&e.message||e), 5000); });
-  return r.pending;
-}
-
-// ---------------- UI loop ----------------
-const live = $('live'); const lc = live.getContext('2d');
-function sizeCanvas(cv){ const r=cv.getBoundingClientRect(), d=window.devicePixelRatio||1; const w=Math.round(r.width*d), h=Math.round(r.height*d); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } return d; }
-function tick(){
-  requestAnimationFrame(tick);
-  if(!A.ctx) return;
-  const now = performance.now(), pk = A.lastPk; A.lastPk = -120;
-  if(pk > A.peakHold || now - A.peakHoldT > 1500){ A.peakHold = pk; A.peakHoldT = now; }
-  const pos = v => Math.max(0, Math.min(1, (v+60)/60));
-  const mw = $('meter').clientWidth; $('meter').style.setProperty('--mw', mw+'px');
-  $('mb').style.width = (pos(pk)*100)+'%'; $('mh').style.left = 'calc('+(pos(A.peakHold)*100)+'% - 1px)';
-  $('pk').textContent = dbTxt(A.peakHold);
-  A.livePk.push(pk); if(A.livePk.length > 600) A.livePk.splice(0, A.livePk.length-600);
-  const d = sizeCanvas(live), w=live.width, h=live.height, mid=h/2;
-  lc.clearRect(0,0,w,h);
-  const step = 3*d, n = Math.floor(w/step), arr = A.livePk.slice(-n);
-  lc.fillStyle = A.rec ? '#ff6b78' : '#2fe0c0';
-  for(let i=0;i<arr.length;i++){ const a = Math.pow(10, Math.max(-60,arr[i])/20), v=Math.max(1*d, a*(mid-3*d)); lc.fillRect(w-(arr.length-i)*step, mid-v, Math.max(1,step-1*d), v*2); }
-  if(A.rec){
-    const r=A.rec; const s = r.n / r.sr; $('timer').textContent = fmt(s);
-    $('pkMax').textContent = dbTxt(r.peakMax);
-  }
-}
-requestAnimationFrame(tick);
-(function(){ const t=$('tgt'); const p=v=>(v+60)/60*100; t.style.left=p(-9)+'%'; t.style.width=(p(-6)-p(-9))+'%'; })();
-
-// ---------------- record / mark ----------------
-let wakeLock = null;
-async function startRec(){
-  if(!await openInput()) return;
-  if(A.ctx.state==='suspended') await A.ctx.resume();
-  const now = new Date();
-  const name = 'Kayıt '+now.toLocaleDateString('tr-TR')+' '+now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
-  A.rec = {id:'t'+now.getTime(), created:now.getTime(), name, sr:A.ctx.sampleRate, n:0, buf:[], bufN:0, idx:0, marks:[], peakMax:-120};
-  await putTake({id:A.rec.id, created:A.rec.created, sr:A.rec.sr, n:0, marks:[], peakMax:-120, done:false, name});
-  A.livePk = [];
-  $('bRec').classList.add('on'); $('bRec').setAttribute('aria-label','Kaydı durdur');
-  $('bMark').disabled = false; $('markN').hidden = true; $('markN').textContent='0';
-  $('timer').textContent = fmt(0); $('pkMax').textContent='−∞';
-  try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){ wakeLock=null; }
-}
-async function stopRec(msg){
-  const r = A.rec; if(!r) return;
-  await flushRec(true); await r.pending;
-  A.rec = null;
-  $('bRec').classList.remove('on'); $('bRec').setAttribute('aria-label','Kayda başla');
-  $('bMark').disabled = true;
-  try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock=null;
-  if(!A.monitoring) closeInput();
-  toast(msg || ('Kaydedildi · '+fmt(r.n/r.sr)+(r.marks.length? ' · '+r.marks.length+' işaret':'')));
-  await renderTakes(); openTake(r.id);
-}
-function mark(){
-  const r = A.rec; if(!r) return;
-  r.marks.push(r.n);
-  $('markN').hidden=false; $('markN').textContent = r.marks.length;
-  const c=$('recCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
-  if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
-}
-function setMonBtn(){ $('bMon').innerHTML = '<svg class="ic"><use href="#i-'+(A.monitoring?'pause':'play')+'"/></svg>'; $('bMon').setAttribute('aria-label', A.monitoring?'Mikrofonu kapat':'Mikrofonu aç / seviye kontrolü'); }
-$('bMon').onclick = async ()=>{
-  if(A.rec) return;
-  if(A.monitoring){ A.monitoring=false; closeInput(); }
-  else if(await openInput()){ A.monitoring = true; setMonBtn(); toast('Mikrofon açık: seviyeyi −9…−6 dB tepeye ayarlayın.'); }
+// =====================================================================================
+// tools
+// =====================================================================================
+const TOOLS = {
+  edit:[
+    {id:'cut', l:'Kes', i:'cut', need:'sel', fn:()=>edit('cut')},
+    {id:'copy', l:'Kopyala', i:'copy', need:'sel', fn:()=>edit('copy')},
+    {id:'paste', l:'Yapıştır', i:'paste', need:'clip', fn:()=>edit('paste')},
+    {id:'del', l:'Sil', i:'trash', need:'sel', fn:()=>edit('del')},
+    {id:'crop', l:'Kırp', i:'crop', need:'sel', fn:()=>edit('crop')},
+    {id:'mute', l:'Sustur', i:'mute', need:'sel', fn:()=>edit('mute')},
+    {id:'gap', l:'Boşluk ekle', i:'gap', need:'', fn:()=>sheetSilence()},
+    {id:'script', l:'Metin', i:'text', need:'', acc:1, fn:()=>sheetScript()},
+  ],
+  clean:[
+    {id:'noise', l:'Gürültü', i:'noise', need:'audio', acc:1, fn:()=>sheetNoise()},
+    {id:'breath', l:'Nefes', i:'breath', need:'audio', acc:1, fn:()=>sheetBreath()},
+    {id:'heal', l:'Onar', i:'heal', need:'audio', acc:1, fn:()=>doHeal()},
+    {id:'click', l:'Ağız/klik', i:'click', need:'audio', acc:1, fn:()=>sheetClick()},
+    {id:'hum', l:'Uğultu/gürleme', i:'hum', need:'audio', acc:1, fn:()=>sheetHum()},
+    {id:'shrink', l:'Boşluk kısalt', i:'shrink', need:'audio', acc:1, fn:()=>sheetTrunc()},
+  ],
+  level:[
+    {id:'norm', l:'Normalleştir', i:'norm', need:'audio', acc:1, fn:()=>sheetNorm()},
+    {id:'gain', l:'Gain', i:'gain', need:'audio', acc:1, fn:()=>sheetGain()},
+    {id:'fin', l:'Yumuşak giriş', i:'fin', need:'sel', fn:()=>runJob(AX.fade(S.sel.a, S.sel.b, true))},
+    {id:'fout', l:'Yumuşak çıkış', i:'fout', need:'sel', fn:()=>runJob(AX.fade(S.sel.a, S.sel.b, false))},
+    {id:'meter', l:'Analiz', i:'meter', need:'audio', acc:1, fn:()=>doAnalyze()},
+  ]
 };
-$('bRec').onclick = ()=>{ A.rec ? stopRec() : startRec(); };
-$('bMark').onclick = mark;
-document.addEventListener('keydown', e=>{
-  if(!A.rec) return;
-  if([' ','ArrowRight','ArrowDown','PageDown','Enter','m','M'].includes(e.key)){ e.preventDefault(); mark(); }
+const TOOL_HELP = {
+  cut:'Seçimi keser ve panoya alır.', copy:'Seçimi panoya kopyalar.', paste:'Panodakini imlece ya da seçimin yerine yapıştırır.',
+  del:'Seçimi siler; kenarlar tık olmasın diye yumuşak birleşir.', crop:'Seçim dışında kalan her şeyi siler.', mute:'Seçimi sessizleştirir; süre değişmez.',
+  gap:'İmlece belirli uzunlukta sessizlik ekler.', script:'Teleprompter metni: kayıt ekranında cümle cümle akar.',
+  noise:'Sabit arka plan gürültüsünü (fan, klima, hışırtı) azaltır. Önce sessiz bir bölümden örnek alır.',
+  breath:'Nefesleri bulur; tek tek seçip kısar ya da susturursunuz.', heal:'Seçili küçük bölümdeki tık ve çıtırtıyı çevresinden onarır.',
+  click:'Ağız şapırtısı ve dijital tıkları otomatik bulup onarır.', hum:'Şebeke uğultusunu (50/60 Hz) ve 80 Hz altı gürlemeyi siler.',
+  shrink:'Cümle aralarındaki uzun sessizlikleri kısaltır.', norm:'En yüksek tepeyi hedef seviyeye (ör. −3 dB) getirir.',
+  gain:'Sesi belirli dB kadar yükseltir ya da alçaltır.', fin:'Seçimin başını sessizlikten yumuşakça açar.', fout:'Seçimin sonunu yumuşakça kapatır.',
+  meter:'Tepe, ortalama ve gürültü tabanını ölçer; teslim ölçütleriyle karşılaştırır.'
+};
+function renderTools(){
+  const row = $('toolrow');
+  row.innerHTML = TOOLS[S.tab].map(t=>`<button class="tool ${t.acc?'acc':''}" data-tool="${t.id}" ${t.need?`data-need="${t.need}"`:''} title="${esc(TOOL_HELP[t.id]||'')}">${ic(t.i)}<span>${t.l}</span></button>`).join('');
+  row.querySelectorAll('.tool').forEach(b=>{
+    let lp = 0, long = false;
+    b.addEventListener('pointerdown', ()=>{ long = false; clearTimeout(lp); lp = setTimeout(()=>{ long = true; vib(); toast(TOOL_HELP[b.dataset.tool]||'', 3600); }, 520); });
+    const end = ()=>clearTimeout(lp);
+    b.addEventListener('pointerup', end); b.addEventListener('pointerleave', end); b.addEventListener('pointercancel', end);
+    b.addEventListener('contextmenu', e=>e.preventDefault());
+    b.onclick = ()=>{ if(long){ long = false; return; } const t = TOOLS[S.tab].find(x=>x.id===b.dataset.tool); stopPlay(); t.fn(); };
+  });
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
+  updateButtons();
+}
+$('tabs').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; S.tab = b.dataset.t; renderTools(); };
+
+function edit(op){
+  const s = selOrNull();
+  let r;
+  if(op==='cut') r = AX.cut(s.a, s.b);
+  else if(op==='copy'){ r = AX.copy(s.a, s.b); const o = J(r); if(o && o.ok!==false){ setState(o); toast('Kopyalandı · '+fmtDur(o.clip, S.sr)); updateButtons(); } else toast((o&&o.error)||'Kopyalanamadı'); return; }
+  else if(op==='paste') r = s ? AX.paste(s.a, s.b) : AX.paste(S.cursor, S.cursor);
+  else if(op==='del') r = AX.del(s.a, s.b);
+  else if(op==='crop') r = AX.crop(s.a, s.b);
+  else if(op==='mute') r = AX.mute(s.a, s.b);
+  const msg = {cut:'Kesildi', paste:'Yapıştırıldı', del:'Silindi', crop:'Seçim dışı silindi', mute:'Susturuldu'}[op];
+  const ms = S.markSel, wasMark = (op==='del'||op==='cut') && ms && s && Math.abs(s.a-ms.a) < S.sr*0.5 && Math.abs(s.b-ms.b) < S.sr*0.5;
+  if(applyResult(J(r), msg)){
+    vib(); if(op==='crop') fit();
+    if(wasMark){ S.marks = J(AX.delMark(s.a, S.sr*0.08)) || []; S.mIdx = -1; mstripUpd(); draw(); toast(msg+' · işaret kaldırıldı'); }
+    S.markSel = null;
+  }
+}
+$('eUndo').onclick = ()=>{ const o = J(AX.undo()); if(o && o.ok!==false){ const lbl = S.st && S.st.undoLabel; applyResult(o); toast('Geri alındı'+(lbl?': '+lbl:'')); } };
+$('eRedo').onclick = ()=>{ const lbl = S.st && S.st.redoLabel; const o = J(AX.redo()); if(o && o.ok!==false){ applyResult(o); toast('Yinelendi'+(lbl?': '+lbl:'')); } };
+
+// =====================================================================================
+// waveform view
+// =====================================================================================
+const wave = $('wave'), wcv = $('waveCv'), rcv = $('rulerCv'), ocv = $('overCv'), dcv = $('dbCv');
+let W=300, H=200, dpr = window.devicePixelRatio||1, overDirty = true, drawQ = false, peaksCache = null;
+function resize(){
+  dpr = window.devicePixelRatio||1;
+  W = Math.max(50, wave.clientWidth); H = Math.max(50, wave.clientHeight);
+  wcv.width = Math.round(W*dpr); wcv.height = Math.round(H*dpr);
+  const rr = $('ruler'); rcv.width = Math.round(rr.clientWidth*dpr); rcv.height = Math.round(rr.clientHeight*dpr);
+  const oo = $('over'); ocv.width = Math.round(oo.clientWidth*dpr); ocv.height = Math.round(oo.clientHeight*dpr);
+  dcv.width = Math.round(dcv.clientWidth*dpr); dcv.height = Math.round(dcv.clientHeight*dpr);
+  overDirty = true; peaksCache = null;
+  clampView();
+  vmDraw();
+}
+function minSpp(){ return 0.05; }
+function maxSpp(){ return Math.max(S.len, S.sr*10) / W * 1.02; }
+function clampView(){
+  S.spp = clamp(S.spp, minSpp(), maxSpp());
+  const vis = W*S.spp;
+  const maxStart = Math.max(0, S.len - vis*0.5);
+  S.start = clamp(S.start, Math.min(0, S.len - vis), maxStart);
+  if(S.len <= vis) S.start = 0;
+}
+function fit(){ S.spp = maxSpp(); S.start = 0; clampView(); draw(true); }
+function zoomAt(f, xc){
+  if(xc==null) xc = (S.playing && S.ppos>=0) ? xOf(S.ppos) : (selOrNull()? (xOf(S.sel.a)+xOf(S.sel.b))/2 : xOf(S.cursor));
+  if(xc<0||xc>W) xc = W/2;
+  const t = S.start + xc*S.spp;
+  S.spp = clamp(S.spp*f, minSpp(), maxSpp());
+  S.start = t - xc*S.spp;
+  clampView(); draw();
+}
+function xOf(t){ return (t - S.start)/S.spp; }
+function tOf(x){ return clamp(Math.round(S.start + x*S.spp), 0, S.len); }
+function draw(force){ if(force){ peaksCache=null; specGen++; } if(drawQ) return; drawQ = true; requestAnimationFrame(()=>{ drawQ=false; paint(); }); }
+
+function getPeaks(){
+  const cols = wcv.width;
+  const sppDev = S.spp/dpr;
+  const key = S.start.toFixed(3)+'|'+sppDev.toFixed(6)+'|'+cols+'|'+S.len;
+  if(peaksCache && peaksCache.key===key) return peaksCache;
+  let res;
+  if(sppDev < 1.5){
+    const n = Math.ceil(W*S.spp)+3;
+    const s0 = Math.floor(S.start)-1;
+    res = {key, mode:'samples', s0, data:b64s(AX.samples(s0, n))};
+  } else {
+    res = {key, mode:'peaks', data:b64s(AX.peaks(S.start, sppDev, cols))};
+  }
+  peaksCache = res; return res;
+}
+// ---- spectral view ----
+const SPEC_ROWS = 160, SPEC_FMIN = 50;
+let specCache = null, specPend = null, specId = 0, specGen = 0, specTimer = 0;
+const SPEC_LUT = (()=>{ const st=[[0,[6,7,10]],[0.32,[12,30,58]],[0.52,[20,110,135]],[0.70,[47,224,192]],[0.86,[255,214,102]],[1,[255,255,255]]];
+  const l=new Uint8ClampedArray(256*3);
+  for(let i=0;i<256;i++){ const t=i/255; let k=0; while(k<st.length-2 && t>st[k+1][0]) k++; const t0=st[k][0], c0=st[k][1], t1=st[k+1][0], c1=st[k+1][1]; const u=Math.max(0,Math.min(1,(t-t0)/(t1-t0))); for(let j=0;j<3;j++) l[i*3+j]=c0[j]+(c1[j]-c0[j])*u; }
+  return l; })();
+function specRequest(){
+  const cols = Math.max(1, Math.ceil(wcv.width/2)), sppC = S.spp/dpr*2;
+  const key = S.start.toFixed(2)+'|'+sppC.toFixed(5)+'|'+cols+'|'+S.len+'|'+specGen;
+  if((specCache && specCache.key===key) || (specPend && specPend.key===key)) return;
+  clearTimeout(specTimer);
+  const go = ()=>{ specId++; specPend = {id:specId, key, start:S.start, spp:sppC, cols}; try{ AX.spectrum(specId, S.start, sppC, cols, SPEC_ROWS); }catch(e){ specPend=null; } };
+  if(specCache) specTimer = setTimeout(go, 90); else go();
+}
+function onSpec(d){
+  if(!specPend || d.id!==specPend.id || !d.data) return;
+  const raw = atob(d.data), cols = d.cols, rows = d.rows;
+  const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
+  const cx = cv.getContext('2d'), im = cx.createImageData(cols, rows), px = im.data;
+  for(let i=0;i<cols*rows;i++){ const v = raw.charCodeAt(i)*3, o = i*4; px[o]=SPEC_LUT[v]; px[o+1]=SPEC_LUT[v+1]; px[o+2]=SPEC_LUT[v+2]; px[o+3]=255; }
+  cx.putImageData(im, 0, 0);
+  specCache = {key:specPend.key, start:specPend.start, spp:specPend.spp, cols, cv}; specPend = null;
+  if(S.spec) draw();
+}
+function paintSpec(c, cw, ch){
+  c.fillStyle = '#06070a'; c.fillRect(0, 0, cw, ch);
+  specRequest();
+  const sc = specCache; if(!sc) return;
+  const x0 = (sc.start - S.start)/S.spp*dpr, w = sc.cols*sc.spp/S.spp*dpr;
+  c.imageSmoothingEnabled = true; c.drawImage(sc.cv, x0, 0, w, ch);
+  const xe = xOf(S.len)*dpr; if(xe < cw){ c.fillStyle = '#06070a'; c.fillRect(Math.max(0,xe), 0, cw-Math.max(0,xe), ch); }
+}
+function specFreqY(f, ch){ const nyq = S.sr/2; return (1 - Math.log(f/SPEC_FMIN)/Math.log(nyq/SPEC_FMIN))*ch; }
+function setSpec(on){
+  S.spec = !!on; try{ localStorage.setItem('spec', S.spec?'1':'0'); }catch(e){}
+  const b = $('specBtn'); if(b){ b.classList.toggle('on', S.spec); b.setAttribute('aria-pressed', S.spec?'true':'false'); }
+  $('vzBtn').style.display = S.spec? 'none' : '';
+  const vv = $('vmVal'); if(vv && (vv.textContent==='dB' || vv.textContent==='Hz')) vv.textContent = S.spec? 'Hz' : 'dB';
+  draw();
+}
+function paint(){
+  const c = wcv.getContext('2d');
+  const cw = wcv.width, ch = wcv.height;
+  c.clearRect(0,0,cw,ch);
+  const mid = ch/2, amp = (ch/2 - 6*dpr) * S.vz;
+  if(S.spec) paintSpec(c, cw, ch); else {
+  // dB grid (same scale as the ruler on the right)
+  c.fillStyle = 'rgba(255,255,255,0.045)';
+  for(const db of [-3,-6,-12,-18,-24,-36]){ const d = Math.pow(10,db/20)*amp; if(d < 8*dpr) continue; for(const y of [mid-d, mid+d]) if(y>0&&y<ch) c.fillRect(0, Math.round(y), cw, 1); }
+  const bd = bandRange();
+  if(bd){
+    c.strokeStyle = 'rgba(255,196,77,0.38)'; c.lineWidth = 1; c.setLineDash([5*dpr, 4*dpr]);
+    for(const db of bd){ const d = Math.pow(10,db/20)*amp; for(const y of [mid-d, mid+d]) if(y>0&&y<ch){ c.beginPath(); c.moveTo(0, Math.round(y)+0.5); c.lineTo(cw, Math.round(y)+0.5); c.stroke(); } }
+    c.setLineDash([]);
+  }
+  c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(0, Math.round(mid), cw, 1);
+  }
+  const s = selOrNull();
+  const sx0 = s? xOf(s.a)*dpr : -1, sx1 = s? xOf(s.b)*dpr : -1;
+  // breath regions
+  if(S.breath){
+    S.breath.regions.forEach((r,i)=>{
+      const x0 = xOf(r.a)*dpr, x1 = xOf(r.b)*dpr;
+      if(x1<0||x0>cw) return;
+      c.fillStyle = r.on? 'rgba(255,170,60,0.22)' : 'rgba(140,147,163,0.12)';
+      c.fillRect(x0, 0, Math.max(1,x1-x0), ch);
+      c.fillStyle = r.on? 'rgba(255,170,60,0.9)' : 'rgba(140,147,163,0.6)';
+      c.fillRect(x0, 0, Math.max(1,x1-x0), 3*dpr);
+      if(i===S.breath.idx){ c.strokeStyle='rgba(255,196,77,0.95)'; c.lineWidth=1.5*dpr; c.strokeRect(x0+0.5, 0.5, Math.max(1,x1-x0)-1, ch-1); }
+    });
+  }
+  // selection background
+  if(s){ c.fillStyle = S.spec? 'rgba(170,190,255,0.20)' : 'rgba(120,150,255,0.17)'; c.fillRect(sx0, 0, Math.max(1, sx1-sx0), ch); }
+  // waveform
+  if(S.len>0 && !S.spec){
+    const pk = getPeaks();
+    if(pk.mode==='peaks'){
+      const d = pk.data, n = d.length>>1;
+      const k = amp/32767;
+      for(let i=0;i<n;i++){
+        let mn = d[2*i]*k, mx = d[2*i+1]*k;
+        if(mx-mn < 1) { const m=(mx+mn)/2; mn=m-0.5; mx=m+0.5; }
+        const inSel = s && i>=sx0 && i<=sx1;
+        c.fillStyle = inSel ? '#cfe9ff' : '#2fe0c0';
+        c.fillRect(i, mid - mx, 1, Math.max(1, mx-mn));
+      }
+      // soft inner core
+      c.globalAlpha = 0.35;
+      for(let i=0;i<n;i+=1){
+        const mn = d[2*i]*k*0.45, mx = d[2*i+1]*k*0.45;
+        const inSel = s && i>=sx0 && i<=sx1;
+        c.fillStyle = inSel ? '#ffffff' : '#9ff5e5';
+        c.fillRect(i, mid - mx, 1, Math.max(0, mx-mn));
+      }
+      c.globalAlpha = 1;
+    } else {
+      const d = pk.data, k = amp/32767;
+      c.strokeStyle = '#2fe0c0'; c.lineWidth = 1.5*dpr; c.beginPath();
+      for(let i=0;i<d.length;i++){
+        const t = pk.s0 + i; if(t<0||t>=S.len) continue;
+        const x = xOf(t)*dpr, y = mid - d[i]*k;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.stroke();
+      if(S.spp < 0.25){ c.fillStyle='#bff7ec'; for(let i=0;i<d.length;i++){ const t=pk.s0+i; if(t<0||t>=S.len) continue; c.beginPath(); c.arc(xOf(t)*dpr, mid-d[i]*k, 2.2*dpr, 0, 7); c.fill(); } }
+    }
+  }
+  // selection edges + handles
+  if(s){
+    c.fillStyle = '#8fa6ff';
+    c.fillRect(Math.round(sx0)-1, 0, 2, ch); c.fillRect(Math.round(sx1)-1, 0, 2, ch);
+    const hw = 9*dpr, hh = 20*dpr;
+    c.beginPath(); c.roundRect ? c.roundRect(sx0-hw, 0, hw, hh, [0,0,0,5*dpr]) : c.rect(sx0-hw,0,hw,hh); c.fill();
+    c.beginPath(); c.roundRect ? c.roundRect(sx1, 0, hw, hh, [0,0,5*dpr,0]) : c.rect(sx1,0,hw,hh); c.fill();
+    c.beginPath(); c.roundRect ? c.roundRect(sx0-hw, ch-hh, hw, hh, [5*dpr,0,0,0]) : c.rect(sx0-hw,ch-hh,hw,hh); c.fill();
+    c.beginPath(); c.roundRect ? c.roundRect(sx1, ch-hh, hw, hh, [0,5*dpr,0,0]) : c.rect(sx1,ch-hh,hw,hh); c.fill();
+  }
+  // error marks
+  if(S.marks.length){
+    S.marks.forEach((m,i)=>{
+      const x = xOf(m)*dpr; if(x < -10*dpr || x > cw + 10*dpr) return;
+      const on = i===S.mIdx;
+      c.fillStyle = on ? 'rgba(255,92,106,0.95)' : 'rgba(255,92,106,0.6)';
+      c.fillRect(Math.round(x)-1, 0, on?2:1.5*dpr, ch);
+      c.beginPath(); c.moveTo(x, 2*dpr); c.lineTo(x + 11*dpr, 6*dpr); c.lineTo(x, 10*dpr); c.closePath(); c.fill();
+    });
+  }
+  // cursor
+  const cx = xOf(S.cursor)*dpr;
+  if(cx>=-2 && cx<=cw+2){ c.fillStyle = S.playing? 'rgba(255,196,77,0.45)' : '#ffc44d'; c.fillRect(Math.round(cx)-1, 0, 2, ch); c.beginPath(); c.moveTo(cx-6*dpr,0); c.lineTo(cx+6*dpr,0); c.lineTo(cx, 8*dpr); c.fill(); }
+  // playhead
+  if(S.playing && S.ppos>=0){ const px = xOf(S.ppos)*dpr; c.fillStyle = '#ffffff'; c.fillRect(Math.round(px)-1, 0, 2, ch); }
+  paintRuler(); if(overDirty) paintOverview(); paintOverviewWin(); paintDb();
+  updateInfo();
+}
+function niceStep(secPerPx){
+  const steps = [0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,15,30,60,120,300,600,900,1800,3600];
+  const want = secPerPx*80;
+  for(const s of steps) if(s>=want) return s;
+  return 7200;
+}
+function paintRuler(){
+  const c = rcv.getContext('2d'), cw = rcv.width, ch = rcv.height;
+  c.clearRect(0,0,cw,ch);
+  c.fillStyle = '#14161c'; c.fillRect(0,0,cw,ch);
+  const sec = S.spp/S.sr, step = niceStep(sec);
+  const t0 = S.start/S.sr, t1 = (S.start + W*S.spp)/S.sr;
+  c.fillStyle = '#5d6473'; c.font = (10*dpr)+'px system-ui'; c.textBaseline='middle';
+  const sub = step/5;
+  for(let t = Math.floor(t0/sub)*sub; t<=t1; t+=sub){
+    if(t<0) continue;
+    const x = ((t*S.sr)-S.start)/S.spp*dpr;
+    const major = Math.abs(t/step - Math.round(t/step)) < 1e-6;
+    c.fillRect(Math.round(x), major? ch*0.35 : ch*0.7, 1, ch);
+    if(major){
+      let lbl;
+      if(step<1){ lbl = t.toFixed(step<0.01?3:step<0.1?2:1).replace('.',','); }
+      else { const m = Math.floor(t/60), s = Math.round(t%60); lbl = m+':'+(s<10?'0':'')+s; }
+      c.fillStyle='#8c93a3'; c.fillText(lbl, x+3*dpr, ch*0.38); c.fillStyle='#5d6473';
+    }
+  }
+  if(S.sel){ c.fillStyle='rgba(143,166,255,0.5)'; const a=xOf(S.sel.a)*dpr, b=xOf(S.sel.b)*dpr; c.fillRect(a, ch-3*dpr, b-a, 3*dpr); }
+}
+let overImg = null;
+function paintOverview(){
+  overDirty = false;
+  const cw = ocv.width, ch = ocv.height;
+  if(S.len<=0){ overImg=null; return; }
+  if(!overImg) overImg = document.createElement('canvas');
+  overImg.width = cw; overImg.height = ch;
+  const c = overImg.getContext('2d');
+  c.clearRect(0,0,cw,ch);
+  const d = b64s(AX.peaks(0, S.len/cw, cw));
+  const mid = ch/2, k = (ch/2-1)/32767;
+  c.fillStyle = '#1a8f7c';
+  for(let i=0;i<(d.length>>1);i++){ const mn=d[2*i]*k, mx=d[2*i+1]*k; c.fillRect(i, mid-mx, 1, Math.max(1,mx-mn)); }
+}
+function paintOverviewWin(){
+  const c = ocv.getContext('2d'), cw = ocv.width, ch = ocv.height;
+  c.clearRect(0,0,cw,ch); if(overImg && S.len>0) c.drawImage(overImg,0,0);
+  if(S.len<=0) return;
+  const a = S.start/S.len*cw, b = (S.start+W*S.spp)/S.len*cw;
+  c.fillStyle='rgba(255,255,255,0.10)'; c.fillRect(a,0,Math.max(2,b-a),ch);
+  c.strokeStyle='rgba(255,255,255,0.55)'; c.lineWidth=1*dpr; c.strokeRect(a+0.5,0.5,Math.max(2,b-a)-1,ch-1);
+  if(S.sel){ c.fillStyle='rgba(143,166,255,0.45)'; c.fillRect(S.sel.a/S.len*cw,0,Math.max(1,(S.sel.b-S.sel.a)/S.len*cw),ch); }
+  if(S.marks.length){ c.fillStyle='rgba(255,92,106,0.9)'; S.marks.forEach(m=>c.fillRect(Math.round(m/S.len*cw), 0, Math.max(1,1.5*dpr), ch)); }
+  const cx = (S.playing&&S.ppos>=0? S.ppos:S.cursor)/S.len*cw; c.fillStyle='#ffc44d'; c.fillRect(cx-1,0,2,ch);
+}
+
+// ---------- gestures ----------
+const ptrs = new Map();
+let g = null; // gesture state
+function localX(e){ const r = wave.getBoundingClientRect(); return e.clientX - r.left; }
+wave.addEventListener('pointerdown', e=>{
+  if(e.target.closest && e.target.closest('button')) return;
+  wave.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, {x:localX(e), y:e.clientY});
+  if(ptrs.size===2){
+    const [p1,p2] = [...ptrs.values()];
+    if(g && g.type==='select' && g.prevSel!==undefined){ S.sel = g.prevSel; }
+    g = {type:'pinch', d0:Math.max(20,Math.abs(p1.x-p2.x)), spp0:S.spp, tMid:S.start + ((p1.x+p2.x)/2)*S.spp};
+    return;
+  }
+  if(ptrs.size>2) return;
+  const x = localX(e);
+  const s = selOrNull();
+  let handle = null;
+  if(s){ const xa = xOf(s.a), xb = xOf(s.b); if(Math.abs(x-xa)<22) handle='a'; else if(Math.abs(x-xb)<22) handle='b'; if(handle && Math.abs(x-xa)<22 && Math.abs(x-xb)<22) handle = x<xa? 'a' : x>xb ? 'b' : (x-xa < xb-x ? 'a':'b'); }
+  g = {type: handle? 'handle': S.pan ? 'pan' : 'tap', handle, x0:x, t0:tOf(x), st0:S.start, prevSel: S.sel? {...S.sel}:null, moved:false};
 });
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden && A.rec) stopRec('Uygulamadan çıkıldığı için kayıt durdu ve kaydedildi.'); });
-window.addEventListener('pagehide', ()=>{ if(A.rec) flushRec(true); });
-
-// ---------------- takes / player ----------------
-let takes = [], cur = null;
-const P = { samples:null, src:null, ctx:null, t0:0, off:0, playing:false };
-async function renderTakes(){
-  takes = (await allTakes()).sort((a,b)=>b.created-a.created);
-  const el = $('takes');
-  if(!takes.length){ el.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
-  el.innerHTML = '';
-  for(const t of takes){
-    const d = document.createElement('div'); d.className='take';
-    const info = fmt(t.n/t.sr)+' · '+(t.sr/1000).toLocaleString('tr-TR')+' kHz'+(t.marks.length? ' · '+t.marks.length+' işaret':'')+(t.recovered?' · kurtarıldı':'');
-    d.innerHTML = '<div class="t"><b></b><small></small></div>';
-    d.querySelector('b').textContent = t.name; d.querySelector('small').textContent = info;
-    const op = document.createElement('button'); op.className='ibtn'; op.setAttribute('aria-label', t.name+' aç'); op.innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; op.onclick=()=>openTake(t.id);
-    const del = document.createElement('button'); del.className='ibtn'; del.setAttribute('aria-label', t.name+' sil'); del.innerHTML='<svg class="ic"><use href="#i-del"/></svg>';
-    del.onclick=async()=>{ if(del.dataset.arm){ stopPlay(); await deleteTake(t.id); if(cur&&cur.id===t.id){ cur=null; $('player').hidden=true; } renderTakes(); } else { del.dataset.arm='1'; del.style.borderColor='var(--rec)'; toast('Silmek için bir daha dokunun'); setTimeout(()=>{ delete del.dataset.arm; del.style.borderColor=''; },2500); } };
-    d.append(op, del); el.append(d);
+wave.addEventListener('pointermove', e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, {x:localX(e), y:e.clientY});
+  if(!g) return;
+  if(g.type==='pinch' && ptrs.size>=2){
+    const [p1,p2] = [...ptrs.values()];
+    const d = Math.max(20, Math.abs(p1.x-p2.x)), mx = (p1.x+p2.x)/2;
+    S.spp = clamp(g.spp0 * g.d0/d, minSpp(), maxSpp());
+    S.start = g.tMid - mx*S.spp; clampView(); draw(); return;
   }
+  const x = localX(e);
+  if(g.type==='pan'){ if(Math.abs(x-g.x0)>6) g.moved = true; if(g.moved){ S.start = g.st0 - (x - g.x0)*S.spp; clampView(); draw(); } return; }
+  if(g.type==='tap' && Math.abs(x-g.x0)>8){ g.type='select'; }
+  if(g.type==='select'){ g.lastX = x; S.sel = {a:Math.min(g.t0, tOf(x)), b:Math.max(g.t0, tOf(x))}; edgeScroll(); draw(); }
+  else if(g.type==='handle'){
+    g.lastX = x;
+    const t = tOf(x);
+    if(g.handle==='a'){ S.sel.a = Math.min(t, S.sel.b-1); } else { S.sel.b = Math.max(t, S.sel.a+1); }
+    edgeScroll(); draw();
+  }
+});
+function endPtr(e){
+  if(!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if(!g) return;
+  if(g.type==='pinch'){ if(ptrs.size===0) g=null; else g={type:'none'}; return; }
+  if(g.type==='pan' && g.moved){ g = null; return; }
+  if(g.type==='tap' || g.type==='pan'){
+    const t = g.t0;
+    if(S.breath && toggleBreathAt(t)) { g=null; return; }
+    S.cursor = t; S.sel = null;
+    if(S.playing){ startPlay(t, 0); }
+    draw(); updateButtons();
+  } else if(g.type==='select' || g.type==='handle'){
+    if(S.sel && S.sel.b - S.sel.a < 2) S.sel = null;
+    if(S.sel) S.cursor = S.sel.a;
+    updateButtons(); draw();
+  }
+  g=null;
 }
-async function openTake(id){
+wave.addEventListener('pointerup', endPtr);
+wave.addEventListener('pointercancel', endPtr);
+wave.addEventListener('wheel', e=>{ e.preventDefault(); if(e.ctrlKey||Math.abs(e.deltaY)>Math.abs(e.deltaX)) zoomAt(e.deltaY>0?1.25:0.8, localX(e)); else { S.start += e.deltaX*S.spp; clampView(); draw(); } }, {passive:false});
+let edgeRaf = 0;
+function edgeScroll(){
+  if(edgeRaf) return;
+  const step = ()=>{
+    edgeRaf = 0;
+    if(!g || (g.type!=='select' && g.type!=='handle') || g.lastX==null) return;
+    const x = g.lastX; let dx = 0;
+    if(x < 28) dx = -(28-x); else if(x > W-28) dx = (x-(W-28));
+    if(!dx) return;
+    S.start += dx*0.6*S.spp; clampView();
+    const t = tOf(x);
+    if(g.type==='select') S.sel = {a:Math.min(g.t0,t), b:Math.max(g.t0,t)};
+    else if(g.handle==='a') S.sel.a = Math.min(t, S.sel.b-1); else S.sel.b = Math.max(t, S.sel.a+1);
+    draw(); edgeRaf = requestAnimationFrame(step);
+  };
+  edgeRaf = requestAnimationFrame(step);
+}
+// ruler drag = pan
+(function(){
+  const el = $('ruler'); let px=null, st0=0;
+  el.addEventListener('pointerdown', e=>{ el.setPointerCapture(e.pointerId); px=e.clientX; st0=S.start; });
+  el.addEventListener('pointermove', e=>{ if(px==null) return; S.start = st0 - (e.clientX-px)*S.spp; clampView(); draw(); });
+  const up = ()=>{ px=null; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+})();
+// overview = jump/drag window
+(function(){
+  const el = $('over'); let down=false;
+  const go = e=>{ if(S.len<=0) return; const r = el.getBoundingClientRect(); const t = (e.clientX-r.left)/r.width*S.len; S.start = t - W*S.spp/2; clampView(); draw(); };
+  el.addEventListener('pointerdown', e=>{ el.setPointerCapture(e.pointerId); down=true; go(e); });
+  el.addEventListener('pointermove', e=>{ if(down) go(e); });
+  const up=()=>{down=false;}; el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
+})();
+$('zIn').onclick = ()=>zoomAt(0.5);
+$('zOut').onclick = ()=>zoomAt(2);
+$('zFit').onclick = ()=>fit();
+$('zSel').onclick = ()=>{ const s = selOrNull(); if(!s) return; const len = s.b-s.a; S.spp = clamp(len*1.15/W, minSpp(), maxSpp()); S.start = s.a - len*0.075; clampView(); draw(); };
+$('zAll').onclick = ()=>{ if(S.len<=0) return; S.sel = {a:0, b:S.len}; S.cursor=0; updateButtons(); draw(); };
+function panUpd(){ S.pan = !!S.settings.panMode; $('panBtn').classList.toggle('on', S.pan); $('panBtn').setAttribute('aria-pressed', S.pan); }
+$('panBtn').onclick = ()=>{
+  const on = !S.pan; S.settings.panMode = on; AX.setSettings(JSON.stringify({panMode:on})); panUpd(); vib();
+  toast(on ? 'Kaydırma modu: tek parmakla dalgayı kaydırın. Seçim için kenarları ya da bu düğmeyi kullanın.' : 'Seçim modu: tek parmakla sürükleyerek seçin', 3200);
+};
+$('specBtn').onclick = ()=>{ setSpec(!S.spec); if(S.spec && !(()=>{try{return localStorage.getItem('specTip')}catch(e){return 1}})()){ toast('Spektral görünüm: aşağıda bas, yukarıda tiz sesler. Tıklama ve ağız sesleri ince parlak dikey çizgiler olarak görünür.', 5000); try{localStorage.setItem('specTip','1')}catch(e){} } };
+$('vzBtn').onclick = ()=>{ S.vz = S.vz>=16? 1 : S.vz*2; $('vzTxt').textContent = '×'+S.vz; draw(); };
+window.addEventListener('resize', ()=>{ if(S.screen==='editor'){ const vis = W*S.spp, c = S.start + vis/2; resize(); S.spp = vis/W; S.start = c - W*S.spp/2; clampView(); draw(true); } if(!$('recov').classList.contains('hide')) sizeRecCanvas(); });
+
+// =====================================================================================
+// level meters (dBFS)
+// =====================================================================================
+const DBPTS = [[-60,0],[-40,1/6],[-24,2/6],[-12,3/6],[-6,4/6],[-3,5/6],[0,1]];
+function dbPos(v){
+  if(v<=-60) return 0; if(v>=0) return 1;
+  for(let i=1;i<DBPTS.length;i++) if(v<=DBPTS[i][0]){ const [a0,b0]=DBPTS[i-1],[a1,b1]=DBPTS[i]; return b0+(v-a0)/(a1-a0)*(b1-b0); }
+  return 1;
+}
+function lin2db(x){ return x>1e-6 ? 20*Math.log10(x) : -120; }
+function dbTxt(v){ return v<=-90 ? '−∞' : (v>=0?'+':'')+v.toFixed(1).replace('.',',').replace('-','−'); }
+function newMeter(){ return {pk:-120, rms:-120, hold:-120, holdT:0, max:-120, clip:false, t:0}; }
+/** ballistics: instant attack, ~20 dB/s fall, 1.5 s peak hold */
+function meterFeed(m, pkLin, rmsLin){
+  const now = performance.now(), dt = m.t? Math.min(0.2,(now-m.t)/1000) : 0; m.t = now;
+  const p = lin2db(pkLin), r = lin2db(rmsLin);
+  m.pk = Math.max(p, m.pk - 20*dt); m.rms = Math.max(r, m.rms - 20*dt);
+  if(p >= m.hold || now - m.holdT > 1500){ m.hold = p; m.holdT = now; }
+  if(p > m.max) m.max = p;
+  if(pkLin >= 0.999) m.clip = true;
+}
+const VM = newMeter();
+function meterScale(p){
+  const el = $(p+'Scale'); if(!el) return;
+  const bd = bandRange();
+  const ticks = [0,-3,-6,-12,-24,-40,-60];
+  if(bd) bd.forEach(v=>{ if(ticks.indexOf(v)<0) ticks.push(v); });
+  el.innerHTML = ticks.map(v=>{ const hot = bd && bd.indexOf(v)>=0; return `<span style="bottom:${dbPos(v)*100}%;${hot?'color:#ffc44d':''}">${v? -v : 0}</span><i style="bottom:${dbPos(v)*100}%"></i>`; }).join('');
+  const tr = $(p+'Track'); tr.style.setProperty('--th', tr.clientHeight+'px');
+  let band = tr.querySelector('s');
+  if(bd){ if(!band){ band = document.createElement('s'); tr.appendChild(band); } band.style.bottom = (dbPos(bd[0])*100)+'%'; band.style.height = ((dbPos(bd[1])-dbPos(bd[0]))*100)+'%'; }
+  else if(band) band.remove();
+}
+function meterDraw(p, m){
+  $(p+'Rms').style.height = (dbPos(m.rms)*100)+'%';
+  $(p+'Pk').style.height = (dbPos(m.pk)*100)+'%';
+  const h = $(p+'Hold'); h.style.bottom = 'calc('+(dbPos(m.hold)*100)+'% - 1px)'; h.style.opacity = m.hold>-60 ? 0.85 : 0;
+  const v = $(p+'Val'); v.textContent = dbTxt(m.hold); v.className = 'vm-val num' + (m.hold>-1 ? ' over' : m.hold>-6 ? ' hot' : '');
+  $(p+'Clip').classList.toggle('on', m.clip);
+}
+const DB_LEVELS = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-12,-15,-18,-21,-24,-30,-36,-42,-48,-54,-60];
+function bandRange(){
+  const b = S.settings.band; if(!b || b==='off') return null;
+  const v = String(b).split(',').map(Number); if(v.length<2 || v.some(isNaN)) return null;
+  return [Math.min(v[0],v[1]), Math.max(v[0],v[1])];
+}
+/** dB ruler aligned with the waveform's vertical scale (follows vertical zoom) + playback level on the same scale. */
+function paintDb(){
+  if(!dcv.width) return;
+  const c = dcv.getContext('2d'), cw = dcv.width, ch = dcv.height;
+  c.clearRect(0,0,cw,ch);
+  if(S.spec){
+    c.font = (10*dpr)+'px system-ui'; c.textBaseline = 'middle'; c.textAlign = 'right'; c.fillStyle = '#9aa1ae';
+    for(const [f,l] of [[100,'100'],[200,'200'],[500,'500'],[1000,'1k'],[2000,'2k'],[5000,'5k'],[10000,'10k'],[20000,'20k']]){
+      if(f >= S.sr/2) continue; const y = specFreqY(f, ch); if(y < 8*dpr || y > ch-8*dpr) continue;
+      c.fillRect(0, Math.round(y), 4*dpr, 1); c.fillText(l, cw-3*dpr, y);
+    }
+    return;
+  }
+  const mid = ch/2, amp = (ch/2 - 6*dpr)*S.vz;
+  const bd = bandRange();
+  if(bd){
+    const y1 = Math.pow(10,bd[1]/20)*amp, y0 = Math.pow(10,bd[0]/20)*amp;
+    c.fillStyle = 'rgba(255,196,77,0.15)';
+    c.fillRect(0, mid-y1, cw, y1-y0); c.fillRect(0, mid+y0, cw, y1-y0);
+  }
+  if(VM.pk > -90){
+    const bx = Math.round(6*dpr), bw = Math.round(8*dpr);
+    const a = Math.pow(10, VM.pk/20)*amp, r = Math.pow(10, VM.rms/20)*amp;
+    c.fillStyle = 'rgba(47,224,192,0.35)'; c.fillRect(bx, mid-a, bw, 2*a);
+    c.fillStyle = 'rgba(47,224,192,0.9)'; c.fillRect(bx, mid-r, bw, 2*r);
+    if(VM.hold > -90){ const h = Math.pow(10, VM.hold/20)*amp; c.fillStyle = '#fff'; c.fillRect(bx-2*dpr, mid-h-1, bw+4*dpr, 2); c.fillRect(bx-2*dpr, mid+h-1, bw+4*dpr, 2); }
+  }
+  c.font = (10*dpr)+'px system-ui'; c.textBaseline = 'middle'; c.textAlign = 'right';
+  // important levels first, then fill in the rest where there is room
+  const major = [0,-3,-6,-9,-12,-18,-24,-36,-48];
+  if(bd) bd.forEach(v=>{ if(major.indexOf(v)<0) major.unshift(v); });
+  const minor = DB_LEVELS.filter(v=>major.indexOf(v)<0);
+  const placed = [mid];
+  const gap = 14*dpr;
+  const tryPlace = db=>{
+    const d = Math.pow(10, db/20)*amp, y = mid - d;
+    if(y < 6*dpr || d < 12*dpr) return;
+    for(const py of placed) if(Math.abs(py - y) < gap) return;
+    placed.push(y);
+    const hot = bd && bd.indexOf(db) >= 0;
+    c.fillStyle = hot ? '#ffc44d' : '#5d6473';
+    c.fillRect(0, Math.round(y), 4*dpr, 1); c.fillRect(0, Math.round(mid+d), 4*dpr, 1);
+    c.fillStyle = hot ? '#ffc44d' : (major.indexOf(db)>=0 ? '#aab1be' : '#7c8392');
+    const t = db===0 ? '0' : String(db).replace('-','−');
+    c.fillText(t, cw-4*dpr, y); c.fillText(t, cw-4*dpr, mid+d);
+  };
+  major.forEach(tryPlace); minor.forEach(tryPlace);
+  c.fillStyle = '#5d6473'; c.fillText('−∞', cw-4*dpr, mid);
+}
+function vmDraw(){
+  paintDb();
+  const v = $('vmVal');
+  if(VM.clip){ v.textContent = 'CLIP'; v.className = 'dbhead num clip'; }
+  else { v.textContent = VM.hold>-90 ? dbTxt(VM.hold) : (S.spec?'Hz':'dB'); v.className = 'dbhead num' + (VM.hold>-1 ? ' over' : VM.hold>-6 ? ' hot' : ''); }
+  $('lvlTxt').innerHTML = S.playing && VM.hold>-90 ? `Tepe <b>${dbTxt(VM.hold)} dB</b> · RMS <b>${dbTxt(VM.rms)} dB</b>` : '';
+}
+let vmRaf = 0;
+function vmLoop(){
+  cancelAnimationFrame(vmRaf);
+  const tick = ()=>{
+    let pk = 0, rms = 0;
+    if(S.playing){ const s = AX.level(); if(s){ const a = s.split(','); pk = +a[0]||0; rms = +a[1]||0; } }
+    meterFeed(VM, pk, rms); vmDraw();
+    if(S.playing || VM.pk > -90 || VM.hold > -90) vmRaf = requestAnimationFrame(tick);
+  };
+  vmRaf = requestAnimationFrame(tick);
+}
+$('vmVal').onclick = ()=>{ VM.clip=false; VM.max=-120; vmDraw(); };
+$('rmClip').onclick = ()=>{ if(rec){ rec.m.clip=false; meterDraw('rm', rec.m); } };
+
+// =====================================================================================
+// transport
+// =====================================================================================
+let playRaf = 0;
+function startPlay(from, to){
+  const r = J(AX.play(from, to||0));
+  if(!r || r.ok===false){ toast((r&&r.error)||'Çalınamadı'); return; }
+  S.playing = true; S.ppos = from; setPlayIcon(); pollPlay(); vmLoop();
+}
+function abUpd(show){
+  const c = $('abChip');
+  if(show === false){ c.classList.add('hide'); return; }
+  if(show) c.classList.remove('hide');
+  c.classList.toggle('orig', S.ab);
+  c.innerHTML = S.ab ? '<b>Orijinal</b> çalıyor · İşlenmişe geç' : '<b>İşlenmiş</b> çalıyor · Orijinale geç';
+}
+$('abChip').onclick = ()=>{ S.ab = !S.ab; if(AX.previewAB) AX.previewAB(S.ab); abUpd(); vib(); };
+function stopPlay(){ abUpd(false); if(S.playing){ AX.stop(); } S.playing=false; S.ppos=-1; setPlayIcon(); cancelAnimationFrame(playRaf); draw(); }
+function setPlayIcon(){ $('tPlayIc').setAttribute('href', S.playing? '#i-pause':'#i-play'); }
+function pollPlay(){
+  cancelAnimationFrame(playRaf);
+  const tick = ()=>{
+    if(!S.playing) return;
+    const p = AX.pos();
+    if(p < 0){ S.playing=false; S.ppos=-1; setPlayIcon(); abUpd(false); draw(); return; }
+    S.ppos = p;
+    const x = xOf(p);
+    if(x > W*0.92 || x < 0){ S.start = p - W*S.spp*0.08; clampView(); }
+    draw();
+    playRaf = requestAnimationFrame(tick);
+  };
+  playRaf = requestAnimationFrame(tick);
+}
+$('tPlay').onclick = ()=>{
+  if(S.playing){ const p = S.ppos; stopPlay(); if(p>=0 && !selOrNull()){ /* keep cursor where it was */ } return; }
+  if(S.len<=0) return;
+  const s = selOrNull();
+  if(s) startPlay(s.a, s.b);
+  else startPlay(S.cursor >= S.len-10 ? 0 : S.cursor, 0);
+};
+$('tStart').onclick = ()=>{ const was = S.playing; stopPlay(); S.cursor = 0; S.sel=null; S.start=0; clampView(); updateButtons(); draw(); if(was) startPlay(0,0); };
+$('tEnd').onclick = ()=>{ stopPlay(); S.cursor = S.len; S.sel=null; S.start = S.len - W*S.spp*0.9; clampView(); updateButtons(); draw(); };
+
+// =====================================================================================
+// recording
+// =====================================================================================
+let rec = null;
+function withMic(fn){
+  if(AX.hasMic()) { fn(); return; }
+  S.permCb = granted=>{ if(granted) fn(); else toast('Kayıt için mikrofon izni gerekli', 3500); };
+  AX.askMic();
+}
+function startRecord(mode){
+  if(S.len===0) mode='insert';
   stopPlay();
-  cur = takes.find(t=>t.id===id); if(!cur) return;
-  P.samples = await loadSamples(cur); P.off = 0;
-  $('player').hidden = false;
-  $('pInfo').textContent = cur.name+' · '+fmt(P.samples.length/cur.sr);
-  drawTake();
+  withMic(()=>{
+    const cd = +(S.settings.countdown||0);
+    const prep = mode==='insert' && S.settings.prep!==false;
+    const go = ()=>beginRecord(mode);
+    if(cd>0 && mode==='insert' && !prep) countdown(cd, go); else go();
+  });
 }
-function drawTake(){
-  const cv=$('tw'), c=cv.getContext('2d'), d=sizeCanvas(cv), w=cv.width, h=cv.height, mid=h/2, s=P.samples;
-  c.clearRect(0,0,w,h); if(!s || !s.length) return;
-  const spp = s.length/w;
-  c.fillStyle = '#2fe0c0';
-  for(let x=0;x<w;x++){ let mn=0,mx=0; const a=Math.floor(x*spp), b=Math.min(s.length, Math.floor((x+1)*spp)); for(let i=a;i<b;i++){ const v=s[i]; if(v<mn)mn=v; if(v>mx)mx=v; } c.fillRect(x, mid-mx*(mid-2), 1, Math.max(1,(mx-mn)*(mid-2))); }
-  c.fillStyle = '#ff5c6a';
-  for(const m of cur.marks){ const x=Math.round(m/spp); c.fillRect(x-1*d,0,2*d,h); c.beginPath(); c.moveTo(x,0); c.lineTo(x+9*d,0); c.lineTo(x,9*d); c.fill(); }
-  const pos = curPos(); c.fillStyle='#ffffff'; c.fillRect(Math.round(pos*cur.sr/spp), 0, 1.5*d, h);
-  $('pTime').textContent = fmt(pos);
+function goLive(){
+  if(!rec || !rec.test) return;
+  const cd = +(S.settings.countdown||0);
+  const go = ()=>{ if(!rec) return; AX.recGo(); rec.test = false; rec.m = newMeter(); $('recov').classList.remove('ready'); $('rvPauseIc').setAttribute('href','#i-pause'); if(rec.liveNote!=null) $('rvNote').textContent = rec.liveNote; };
+  if(cd>0) countdown(cd, go); else go();
 }
-function curPos(){ return P.playing ? Math.min(P.samples.length/cur.sr, P.off + (P.ctx.currentTime - P.t0)) : P.off; }
-function stopPlay(){ if(P.playing){ P.off = curPos(); try{ P.src.stop(); }catch(e){} P.playing=false; } $('pPlay').innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; }
-$('pPlay').onclick = async ()=>{
-  if(!cur) return;
-  if(P.playing){ stopPlay(); drawTake(); return; }
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if(!P.ctx) P.ctx = new AC();
-  if(P.ctx.state==='suspended') await P.ctx.resume();
-  if(P.off >= P.samples.length/cur.sr - 0.05) P.off = 0;
-  const buf = P.ctx.createBuffer(1, P.samples.length, cur.sr); buf.copyToChannel ? buf.copyToChannel(P.samples,0) : buf.getChannelData(0).set(P.samples);
-  P.src = P.ctx.createBufferSource(); P.src.buffer = buf; P.src.connect(P.ctx.destination);
-  P.src.onended = ()=>{ if(P.playing && curPos() >= P.samples.length/cur.sr - 0.05){ P.playing=false; P.off=0; $('pPlay').innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; drawTake(); } };
-  P.src.start(0, P.off); P.t0 = P.ctx.currentTime; P.playing = true;
-  $('pPlay').innerHTML='<svg class="ic"><use href="#i-pause"/></svg>';
-  (function loop(){ if(!P.playing) return; drawTake(); requestAnimationFrame(loop); })();
-};
-$('tw').addEventListener('pointerdown', e=>{ if(!cur) return; const r=e.currentTarget.getBoundingClientRect(); const was=P.playing; stopPlay(); P.off = Math.max(0,(e.clientX-r.left)/r.width)*P.samples.length/cur.sr; drawTake(); if(was) $('pPlay').onclick(); });
-
-function wav24(samples, sr){
-  const n = samples.length, data = n*3, b = new ArrayBuffer(44+data), v = new DataView(b);
-  const s = (o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
-  s(0,'RIFF'); v.setUint32(4,36+data,true); s(8,'WAVE'); s(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
-  v.setUint32(24,sr,true); v.setUint32(28,sr*3,true); v.setUint16(32,3,true); v.setUint16(34,24,true); s(36,'data'); v.setUint32(40,data,true);
-  let o=44; for(let i=0;i<n;i++){ let x=Math.max(-1,Math.min(1,samples[i])); let q=Math.round(x<0? x*8388608 : x*8388607); v.setUint8(o,q&255); v.setUint8(o+1,(q>>8)&255); v.setUint8(o+2,(q>>16)&255); o+=3; }
-  return new Blob([b],{type:'audio/wav'});
+function gainUpd(v){ $('rvGainV').textContent = (v>=0?'+':'')+v.toFixed(1).replace('.',',').replace('-','−')+' dB'; }
+$('rvGain').oninput = e=>{ const v = +e.target.value; gainUpd(v); S.settings.inGain = v; AX.recGain(v); };
+function countdown(n, done){
+  const el = document.createElement('div'); el.className='countdown num'; document.body.appendChild(el);
+  let k = n; el.textContent = k;
+  const t = setInterval(()=>{ k--; if(k<=0){ clearInterval(t); el.remove(); done(); } else el.textContent = k; }, 1000);
+  el.onclick = ()=>{ clearInterval(t); el.remove(); };
 }
-$('pWav').onclick = async ()=>{
-  if(!cur || !P.samples) return;
-  const name = cur.name.replace(/[^\wçğıöşüÇĞİÖŞÜ .-]+/g,'-').replace(/\s+/g,'_')+'.wav';
-  const blob = wav24(P.samples, cur.sr);
-  const file = (typeof File==='function') ? new File([blob], name, {type:'audio/wav'}) : null;
-  if(file && navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({files:[file], title:name}); return; }catch(e){ if(e && e.name==='AbortError') return; }
+function beginRecord(mode){
+  const s = selOrNull();
+  let a, b;
+  if(mode==='punch'){ a = s? s.a : S.cursor; b = s? s.b : -1; }
+  else { a = S.cursor; b = a; }
+  const prep = mode==='insert' && S.settings.prep!==false;
+  const r = J(prep ? AX.recPrepare(a) : AX.recStart(mode, a, b));
+  if(!r || r.ok===false){ toast((r&&r.error)||'Kayıt başlatılamadı', 3500); return; }
+  rec = {mode, a:r.a, pre:r.pre||0, blocks:[], from:0, m:newMeter(), paused:false, lastBlocks:0, test:prep, marks:0, markAt:[]};
+  AX.keys(true);
+  $('rvMarkN').classList.remove('on'); $('rvFree').textContent = '';
+  $('recov').classList.toggle('ready', prep);
+  const g0 = +(S.settings.inGain||0); $('rvGain').value = g0; gainUpd(g0);
+  prStart(mode, r.a);
+  $('rvMode').textContent = mode==='punch' ? 'Düzeltme kaydı' : 'Kayıt';
+  $('rvNote').textContent = mode==='punch'
+      ? (s ? 'Seçili bölümün yerine yeni okuma yazılır. Durdurunca dinleyip kontrol edin; beğenmezseniz “Geri al”.'
+           : 'Bu noktadan sonrası yeni okumayla değiştirilir. Ön dinlemeden sonra okumaya devam edin.')
+      : (S.len>0 ? 'Kayıt imleç noktasına eklenecek.' : '');
+  $('rvNote').textContent += ($('rvNote').textContent? ' ' : '') + 'Okurken hata yaparsanız kırmızı bayrağa ya da kulaklık/pedal tuşuna basın; düzenlerken o noktaya atlarsınız. Uygulamadan çıkarsanız kayıt durur.';
+  $('rvPauseIc').setAttribute('href', prep ? '#i-x' : '#i-pause');
+  rec.liveNote = $('rvNote').textContent;
+  if(prep){ const bd = bandRange(); const m = v=>String(v).replace('-','−'); $('rvNote').textContent = 'Metnin en yüksek sesle okunacak cümlesini okuyun ve gain’i'+(bd? ' tepeler '+m(bd[0])+' … '+m(bd[1])+' dB arasında kalacak':' istediğiniz seviyeye gelecek')+' şekilde ayarlayın; sonra kırmızı düğmeyle kayda başlayın. Ses kartında gain düğmesi varsa önce onu kullanın.'; }
+  $('recov').classList.remove('hide');
+  requestAnimationFrame(()=>{ sizeRecCanvas(); if(PR.active){ prMeasure(); prGo(PR.idx, false); } });
+  recPoll();
+}
+function sizeRecCanvas(){ const cv=$('rvCv'); const d=window.devicePixelRatio||1; cv.width = Math.round(cv.clientWidth*d); cv.height = Math.round(cv.clientHeight*d); meterScale('rm'); if(PR.active){ prMeasure(); prGo(PR.idx, false); } }
+function roomVerdict(db, html){
+  const v = db<=-60 ? ['çok iyi','var(--ok)'] : db<=-50 ? ['kabul edilebilir','var(--amber)'] : ['gürültülü: fan, klima, buzdolabı gibi kaynakları kontrol edin','var(--bad)'];
+  const t = 'Ortam gürültüsü '+dbTxt(db)+' dB · ';
+  return html ? t+`<b style="color:${v[1]}">${v[0]}</b>` : t+v[0];
+}
+let recTimer = 0;
+function recPoll(){
+  clearTimeout(recTimer);
+  if(!rec) return;
+  const st = J(AX.recState()) || {};
+  if(st.on){
+    const sr = S.sr;
+    $('rvTime').textContent = st.test ? 'Hazır' : fmtT(st.t||0, sr, 1);
+    const pre = st.pre && rec.mode==='punch';
+    const stEl = $('rvState');
+    stEl.className = 'rv-state' + (pre?' pre':'');
+    const room = !!st.room;
+    if(room){
+      const left = Math.max(1, Math.ceil(((st.roomLen||0) - (st.roomPos||0))/sr));
+      stEl.className = 'rv-state pre';
+      stEl.innerHTML = 'Ortam sesi alınıyor… sessiz kalın · '+left;
+    } else if(st.test){
+      const bd = bandRange();
+      stEl.className = 'rv-state pre';
+      stEl.innerHTML = 'Seviye ayarı' + (bd ? ' · hedef '+String(bd[0]).replace('-','−')+' … '+String(bd[1]).replace('-','−')+' dB' : '') + (st.clip? '<span class="cliptag">CLIP</span>':'');
+    } else stEl.innerHTML = !st.started ? 'Mikrofon açılıyor…' : pre ? 'Ön dinleme… hazırlanın' : st.paused ? 'Duraklatıldı' : ('Kaydediliyor' + (st.clip? '<span class="cliptag">CLIP</span>':''));
+    $('rvDot').classList.toggle('blink', !st.paused && !pre && !room && !st.test);
+    if(st.test) $('rvDot').style.background = 'var(--amber)';
+    const live = !!st.started && !pre && !room && !st.paused && !st.test;
+    if(PR.active){
+      if(live && !PR.recording){ PR.recording = true; AX.cue(PR.idx); }
+      PR.canScroll = live;
+    }
+    $('rvDot').style.background = room||pre ? 'var(--amber)' : '';
+    if(st.roomDb > -999 && !rec.roomShown){ rec.roomShown = true; $('rvNote').innerHTML = roomVerdict(st.roomDb, true); }
+    // free space -> remaining recording time
+    if(st.free != null && st.bytesPerSec > 0){
+      const left = Math.max(0, (st.free - 200*1048576) / st.bytesPerSec);
+      const fe = $('rvFree');
+      fe.textContent = 'Boş alan ' + fmtBytes(st.free) + ' · yaklaşık ' + fmtLeft(left) + ' kayıt';
+      fe.classList.toggle('low', left < 900);
+      if(left < 600 && !st.test && !rec.lowWarned){ rec.lowWarned = true; toast('Depolama azalıyor: yaklaşık '+fmtLeft(left)+' kayıt kaldı', 4000); }
+    }
+    const pdb = (st.lvl||0) > 0 ? Math.max(-60, 20*Math.log10(st.lvl)) : -60;
+    $('rvMeter').setAttribute('aria-valuenow', Math.round(pdb));
+    // voice activity for the voice-follow prompter
+    if(PR.active){
+      const rr = Math.max(1e-5, st.rms||0);
+      PR.fl = PR.fl ? Math.min(PR.fl*1.003, rr) : rr;
+      if(rr > Math.max(PR.fl*3.2, 0.0045)) PR.voiceUntil = performance.now() + 450;
+    }
+    const g = +$('rvGain').value, gh = $('rvGHint');
+    gh.classList.toggle('on', g >= 12);
+    if(g >= 12) gh.textContent = st.ext ? 'Yüksek dijital gain gürültüyü de büyütür. Önce ses kartının kendi gain düğmesini açın.'
+        : st.srcMode==='unprocessed' ? 'Ham girişte yüksek gain cızırtı yapar. Ayarlar › Mikrofon işleme › Otomatik seçin.'
+        : 'Yüksek dijital gain gürültüyü de büyütür. Mikrofona biraz yaklaşmayı deneyin.';
+    $('rvSrc').textContent = (st.srcMode==='unprocessed' ? 'Ham giriş' : st.srcMode==='voice' ? 'Ses tanıma girişi' : st.srcMode ? 'Standart giriş' : '') + (st.fmt? ' · '+st.fmt : '');
+    // meter
+    const m = rec.m;
+    meterFeed(m, st.paused? 0 : (st.lvl||0), st.paused? 0 : (st.rms||0));
+    meterDraw('rm', m);
+    const cls = v=> v>-1 ? 'over' : v>-6 ? 'hot' : '';
+    $('rvPk').textContent = dbTxt(m.hold); $('rvPk').className = 'num '+cls(m.hold);
+    $('rvMax').textContent = dbTxt(m.max); $('rvMax').className = 'num '+cls(m.max);
+    $('rvRms').textContent = dbTxt(m.rms);
+    // peaks
+    const nb = st.blocks||0;
+    if(nb > rec.from){
+      const d = b64s(AX.recPeaks(rec.from));
+      const got = d.length>>1;
+      const start = nb - got;
+      if(start > rec.from){ rec.blocks.length = 0; }
+      for(let i=0;i<got;i++) rec.blocks.push(Math.max(-d[2*i], d[2*i+1]));
+      if(rec.blocks.length > 6000) rec.blocks.splice(0, rec.blocks.length-6000);
+      rec.from = nb;
+    }
+    paintRec();
   }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-};
+  recTimer = setTimeout(recPoll, 40);
+}
+function fmtLeft(sec){
+  if(sec >= 3600){ const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60); return h+' sa'+(m? ' '+m+' dk':''); }
+  if(sec >= 60) return Math.floor(sec/60)+' dk';
+  return Math.max(0, Math.round(sec))+' sn';
+}
+function recMark(){
+  if(!rec || rec.test) return;
+  AX.mark(); vib();
+  rec.marks++; rec.markAt.push(rec.from);
+  const n = $('rvMarkN'); n.textContent = rec.marks; n.classList.add('on');
+  const b = $('rvMark'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+}
+$('rvMark').onclick = recMark;
+function paintRec(){
+  const cv = $('rvCv'), c = cv.getContext('2d'), w = cv.width, h = cv.height, d = window.devicePixelRatio||1;
+  c.clearRect(0,0,w,h);
+  const mid = h/2, k = (h/2-2)/32767;
+  c.fillStyle = 'rgba(255,255,255,0.08)'; c.fillRect(0, mid, w, 1);
+  const bl = rec.blocks, step = Math.max(1, Math.round(1.5*d));
+  const n = Math.floor(w/step);
+  const off = Math.max(0, bl.length - n);
+  c.fillStyle = '#ff6b78';
+  for(let i=off;i<bl.length;i++){
+    const x = (i-off)*step, v = Math.max(1, bl[i]*k);
+    c.fillRect(x, mid-v, Math.max(1, step-0.5), v*2);
+  }
+  if(rec.markAt && rec.markAt.length){
+    const base = rec.from - bl.length;
+    c.fillStyle = '#ff5c6a';
+    rec.markAt.forEach(ab=>{ const x = (ab - base - off)*step; if(x >= 0 && x <= w){ c.fillRect(Math.round(x), 0, Math.max(2, d*1.5), h); } });
+  }
+}
+$('rvStop').onclick = ()=>{ if(rec && rec.test){ goLive(); return; } AX.recStop(); $('rvState').textContent='Kaydediliyor… bitiriliyor'; };
+$('rvScript').onclick = ()=>sheetScript();
+$('rvPause').onclick = ()=>{ if(!rec) return; if(rec.test){ rec.cancel = true; AX.recStop(); return; } rec.paused = !rec.paused; AX.recPause(rec.paused); $('rvPauseIc').setAttribute('href', rec.paused? '#i-rec':'#i-pause'); };
+function recFinished(ev){
+  clearTimeout(recTimer);
+  prStop();
+  AX.keys(false);
+  $('recov').classList.add('hide'); $('recov').classList.remove('ready');
+  const r = rec; rec = null;
+  refresh();
+  if(!(ev.b > ev.a) && !ev.error){ draw(true); return; }
+  if(ev.error && !(ev.b>ev.a)){ toast(ev.error, 4000); return; }
+  S.sel = null; S.cursor = ev.b;
+  const vis = W*S.spp;
+  if(S.len <= vis*1.02 || vis > S.len) fit();
+  else { S.start = S.cursor - vis*0.8; clampView(); }
+  updateButtons(); draw(true);
+  if(ev.auto){ S.jobCb = null; showBusy(); }
+  if(r && r.marks){ S.mIdx = -1; loadMarks(); }
+  if(ev.lowSpace) toast('Depolama doldu: kayıt durduruldu, alınan kısım kaydedildi. Ana ekrandan ya da ⋯ › Depolama ile yer açın.', 5200);
+  else if(ev.left) toast('Uygulamadan çıkıldığı için kayıt durduruldu. O ana kadarki kısım kaydedildi.', 4200);
+  else if(r && r.marks) toast(r.marks+' hata işareti · üstteki kırmızı şeritten işaretler arasında gezin', 4200);
+  else if(ev.error) toast('Kayıt durdu: '+ev.error, 4000);
+  else if(ev.room && !ev.auto) toast(roomVerdict(ev.roomDb)+' · gürültü örneği olarak kaydedildi', 3800);
+  else if(r && r.mode==='punch') toast('Düzeltme eklendi · beğenmezseniz Geri al', 3200);
+}
+$('tRec').onclick = ()=>startRecord('insert');
+$('tPunch').onclick = ()=>startRecord('punch');
 
-// ---------------- recovery ----------------
-async function recover(){
-  const ts = await allTakes(); const open = ts.filter(t=>!t.done);
-  for(const t of open){ t.done = true; t.recovered = true; await putTake(t); }
-  if(open.length){ const b=$('recovBanner'); b.hidden=false; b.textContent = open.length+' yarım kalan kayıt kurtarıldı (son saniyeye kadar). Alımlar listesinde “kurtarıldı” olarak görünüyor.'; }
+// =====================================================================================
+// teleprompter
+// =====================================================================================
+function splitScript(t){
+  const out = [];
+  (t||'').replace(/\r/g,'').split(/\n+/).forEach(par=>{
+    const p = par.trim(); if(!p) return;
+    const parts = p.match(/[^.!?…]+(?:[.!?…]+["'”’»)\]]*|$)\s*/g) || [p];
+    let first = true;
+    parts.forEach(x=>{ const y = x.trim(); if(!y) return; out.push({t:y, np:first && out.length>0}); first = false; });
+  });
+  return out;
+}
+const PR = {active:false, sent:[], idx:0, off:0, run:true, speed:40, raf:0, last:0, tops:null, canScroll:false, recording:false, drag:null};
+function prRender(){
+  const inner = $('prInner');
+  inner.style.setProperty('--prs', (+S.settings.prSize||28)+'px');
+  inner.innerHTML = PR.sent.map((x,i)=>`<p data-i="${i}" class="${x.np?'np':''}">${esc(x.t)}</p>`).join('');
+  PR.tops = null;
+}
+function prMeasure(){ PR.tops = Array.from($('prInner').children).map(p=>[p.offsetTop, p.offsetHeight]); $('prMark').style.top = prMarkY()+'px'; }
+function prMarkY(){ return Math.round($('rvPrompt').clientHeight*0.38); }
+function prApply(anim){ const el = $('prInner'); el.style.transition = anim ? 'transform .28s ease' : 'none'; el.style.transform = `translateY(${-PR.off}px)`; }
+function prMark(i){
+  const ps = $('prInner').children;
+  for(let k=0;k<ps.length;k++){ ps[k].classList.toggle('past', k<i); ps[k].classList.toggle('cur', k===i); }
+  $('prInfo').textContent = (i+1)+'/'+PR.sent.length;
+}
+function prSetIdx(i){
+  i = clamp(i, 0, PR.sent.length-1);
+  if(i === PR.idx && PR.marked) return;
+  PR.idx = i; PR.marked = true; prMark(i);
+  if(PR.recording) AX.cue(i);
+}
+function prGo(i, anim){
+  if(!PR.tops) prMeasure();
+  i = clamp(i, 0, PR.sent.length-1);
+  // the current sentence starts just under the reading line, also the first one (negative offset = space above)
+  PR.off = PR.tops[i][0] - prMarkY() - 6;
+  prApply(anim!==false);
+  PR.marked = false; prSetIdx(i);
+}
+function prIdxAtOff(){
+  const t = PR.tops; if(!t || !t.length) return 0;
+  const y = PR.off + prMarkY() + 8;   // probe just under the reading line
+  let lo=0, hi=t.length-1, ans=0;
+  while(lo<=hi){ const mid=(lo+hi)>>1; if(t[mid][0] <= y){ ans=mid; lo=mid+1; } else hi=mid-1; }
+  return ans;
+}
+function prMaxOff(){ const t = PR.tops; if(!t || !t.length) return 0; const l = t[t.length-1]; return Math.max(0, l[0] + l[1] - prMarkY()); }
+function prTick(ts){
+  if(!PR.active) return;
+  const dt = PR.last ? Math.min(0.1, (ts-PR.last)/1000) : 0; PR.last = ts;
+  if(PR.run && PR.canScroll && !PR.drag && PR.tops && (prMode()!=='voice' || ts < (PR.voiceUntil||0))){
+    PR.off = Math.min(prMaxOff(), PR.off + PR.speed*dt);
+    prApply(false); prSetIdx(prIdxAtOff());
+  }
+  PR.raf = requestAnimationFrame(prTick);
+}
+function prMode(){ return S.settings.prMode || 'voice'; }
+function prUpdCtl(){
+  const mode = prMode(), auto = mode !== 'manual';
+  $('prSlow').style.display = $('prFast').style.display = auto ? '' : 'none';
+  $('prRunIc').setAttribute('href', PR.run ? '#i-pause' : '#i-play');
+  $('prRunTxt').textContent = !auto ? 'Ses tuşu' : !PR.run ? 'Durdu' : (mode==='voice' ? 'Ses ' : 'Akış ')+PR.speed;
+  $('prRun').style.display = auto ? '' : 'none';
+}
+function prStart(mode, a){
+  const text = AX.getScript();
+  PR.sent = splitScript(text);
+  PR.active = PR.sent.length > 0;
+  $('recov').classList.toggle('script', PR.active);
+  if(!PR.active){ AX.keys(!!rec); return; }
+  let i = 0;
+  if(mode==='punch') i = AX.lineAt(a);
+  else if(a > 0) i = AX.lineAt(a-1);
+  if(i < 0) i = 0;
+  PR.idx = i; PR.marked = false; PR.recording = false; PR.canScroll = false; PR.last = 0;
+  PR.run = prMode() !== 'manual'; PR.fl = 0; PR.voiceUntil = 0;
+  PR.speed = +S.settings.prSpeed || 28;
+  prRender(); prUpdCtl();
+  AX.keys(true);
+  cancelAnimationFrame(PR.raf); PR.raf = requestAnimationFrame(prTick);
+}
+function prStop(){ PR.active = false; PR.recording = false; cancelAnimationFrame(PR.raf); if(!rec) AX.keys(false); $('recov').classList.remove('script'); }
+$('prRun').onclick = ()=>{ PR.run = !PR.run; prUpdCtl(); };
+$('prSlow').onclick = ()=>{ PR.speed = Math.max(8, Math.round(PR.speed/1.2)); S.settings.prSpeed = PR.speed; AX.setSettings(JSON.stringify({prSpeed:PR.speed})); prUpdCtl(); };
+$('prFast').onclick = ()=>{ PR.speed = Math.min(200, Math.round(PR.speed*1.2)); S.settings.prSpeed = PR.speed; AX.setSettings(JSON.stringify({prSpeed:PR.speed})); prUpdCtl(); };
+function prFont(d){
+  const sizes = [20,24,28,32,38,44];
+  let k = sizes.indexOf(+S.settings.prSize||28); if(k<0) k = 2;
+  k = clamp(k+d, 0, sizes.length-1);
+  S.settings.prSize = sizes[k]; AX.setSettings(JSON.stringify({prSize:sizes[k]}));
+  $('prInner').style.setProperty('--prs', sizes[k]+'px');
+  requestAnimationFrame(()=>{ prMeasure(); prGo(PR.idx, false); });
+}
+$('prSmall').onclick = ()=>prFont(-1);
+$('prBig').onclick = ()=>prFont(1);
+(function(){
+  const el = $('rvPrompt');
+  el.addEventListener('pointerdown', e=>{ if(!PR.active) return; el.setPointerCapture(e.pointerId); PR.drag = {y:e.clientY, off:PR.off}; });
+  el.addEventListener('pointermove', e=>{ if(!PR.drag) return; PR.off = clamp(PR.drag.off - (e.clientY - PR.drag.y), -prMarkY(), prMaxOff()); prApply(false); prSetIdx(prIdxAtOff()); });
+  const up = ()=>{ PR.drag = null; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+})();
+function prKey(k){ if(!PR.active) return; prGo(PR.idx + (k==='next'?1:-1), true); }
+
+// ---- script sheet (editor) ----
+let scriptSent = [];
+function loadScriptSent(){ scriptSent = S.st ? splitScript(AX.getScript()) : []; sstripUpd(true); }
+let sstripT = 0, sstripLast = -2;
+function sstripUpd(force){
+  const el = $('sstrip');
+  const show = S.screen==='editor' && scriptSent.length>0 && S.len>0;
+  if(el.classList.contains('hide') === show){ el.classList.toggle('hide', !show); requestAnimationFrame(()=>{ resize(); draw(true); }); }
+  if(!show) return;
+  const now = performance.now();
+  if(!force && now - sstripT < 150) return; sstripT = now;
+  const t = S.playing && S.ppos>=0 ? S.ppos : (selOrNull()? S.sel.a : S.cursor);
+  const i = AX.lineAt(Math.max(0, Math.min(S.len-1, t)));
+  if(i === sstripLast && !force) return; sstripLast = i;
+  $('sstripTxt').textContent = i>=0 && scriptSent[i] ? (i+1)+'. '+scriptSent[i].t : 'Metin: bu bölüm için eşleşme yok';
+}
+$('sstrip').onclick = ()=>sheetScript();
+function sheetScript(){
+  const cur = AX.getScript();
+  const last = cur.trim() ? '' : (AX.lastScript ? AX.lastScript() : '');
+  const lastN = last ? splitScript(last).length : 0;
+  const lastBtn = lastN ? `<button class="btn" id="scLast">${ic('text')}Son metin (${lastN})</button>` : '';
+  const mode = prMode();
+  openSheet('Metin (teleprompter)', `
+    <div class="hint" style="margin-top:0">Okuyacağınız metni yapıştırın ya da .txt dosyasından alın. Kayıt ekranında cümle cümle akar; sağda seviye ölçer görünür.</div>
+    <textarea class="field ta" id="scTxt" placeholder="Metni buraya yapıştırın…">${esc(cur)}</textarea>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="scFile">${ic('folder')}Dosyadan al</button>${lastBtn}<button class="btn" id="scClear">${ic('trash')}Temizle</button></div>
+    <div class="row"><label>Kaydırma</label></div>
+    <div class="seg" id="scMode"><button data-v="voice" class="${mode==='voice'?'on':''}">Sese göre</button><button data-v="auto" class="${mode==='auto'?'on':''}">Sabit hız</button><button data-v="manual" class="${mode==='manual'?'on':''}">Tuş / pedal</button></div>
+    <div class="hint" id="scModeHint"></div>
+    <div id="scSpeedRow"><div class="row"><label>Akış hızı</label><span class="v num" id="scSpeedV"></span></div><input type="range" id="scSpeed" min="8" max="160" step="2" value="${+S.settings.prSpeed||28}"></div>
+    <div class="row"><label>Yazı boyutu</label></div>
+    <div class="seg" id="scSize">${[20,24,28,32,38,44].map(v=>`<button data-v="${v}" class="${(+S.settings.prSize||28)===v?'on':''}">${v}</button>`).join('')}</div>
+    <div class="hint">Ekrana dokunmadan cümle değiştirmek için ses tuşlarını (aşağı: sonraki, yukarı: önceki) ya da Bluetooth sayfa çevirme pedalını kullanın. Otomatik modda da bu tuşlar akışı bir cümle ileri/geri atlatır. Düzeltme kaydına basınca metin, imlecin olduğu cümleden başlar.</div>
+    <div class="btns"><button class="btn pri" id="scSave">Kaydet</button></div>`);
+  let m = mode;
+  const upd = ()=>{ $('scSpeedRow').style.display = m!=='manual' ? '' : 'none';
+    $('scModeHint').textContent = m==='voice' ? 'Siz konuştukça akar, sustuğunuzda durur; okuma hızınıza uyar.' : m==='auto' ? 'Seçtiğiniz hızla kesintisiz akar.' : 'Cümleyi ses tuşları ya da Bluetooth pedalla siz değiştirirsiniz.'; };
+  segBind('scMode', v=>{ m = v; upd(); }); upd();
+  let size = +S.settings.prSize||28; segBind('scSize', v=>{ size = +v; });
+  bindRange('scSpeed', v=>v+' px/sn');
+  $('scFile').onclick = ()=>AX.pickScript();
+  $('scClear').onclick = ()=>{ $('scTxt').value = ''; };
+  if($('scLast')) $('scLast').onclick = ()=>{ $('scTxt').value = last; toast('Son kullanılan metin getirildi · Kaydet ile saklayın'); };
+  $('scSave').onclick = ()=>{
+    const t = $('scTxt').value;
+    const changed = t !== cur;
+    const r = J(AX.setScript(t));
+    if(r && r.ok===false){ toast(r.error); return; }
+    const o = {prMode:m, prSpeed:+$('scSpeed').value, prSize:size};
+    AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o);
+    closeSheet(); loadScriptSent();
+    if(rec && !PR.active){ prStart(rec.mode, rec.a); if(PR.active) requestAnimationFrame(()=>{ sizeRecCanvas(); prMeasure(); prGo(PR.idx, false); }); }
+    const n = splitScript(t).length;
+    toast(n ? n+' cümle kaydedildi'+(changed && cur ? ' · eski cümle eşleşmeleri sıfırlandı' : '') : 'Metin temizlendi', 3200);
+  };
 }
 
-// ---------------- diagnostics ----------------
-async function renderDiag(){
-  const s = A.settings || {};
-  const yes = (v, good)=> v===undefined ? '<span class="warn">bilinmiyor</span>' : (v===good ? '<span class="good">'+(v?'açık':'kapalı')+'</span>' : '<span class="badc">'+(v?'açık':'kapalı')+'</span>');
-  let persisted = false, est = null;
-  try{ persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false; }catch(e){}
-  try{ est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null; }catch(e){}
-  const rows = [
-    ['Tarayıcı', IS_IOS ? 'iOS / iPadOS Safari' : (/Android/.test(UA)?'Android':'Masaüstü')],
-    ['Ana ekrandan açıldı', STANDALONE ? '<span class="good">evet</span>' : '<span class="warn">hayır</span>'],
-    ['Kayıt kalıcı mı', persisted ? '<span class="good">evet</span>' : '<span class="warn">hayır (Safari silebilir)</span>'],
-    ['Boş alan', est && est.quota ? ((est.quota-est.usage)/1e9).toFixed(1).replace('.',',')+' GB' : '—'],
-    ['Mikrofon', A.track ? (A.track.label || 'bilinmiyor') : '<span class="warn">henüz açılmadı</span>'],
-    ['Örnekleme', A.ctx ? (A.ctx.sampleRate/1000).toLocaleString('tr-TR')+' kHz' : '—'],
-    ['Yankı giderme', A.track ? yes(s.echoCancellation,false) : '—'],
-    ['Gürültü bastırma', A.track ? yes(s.noiseSuppression,false) : '—'],
-    ['Otomatik kazanç', A.track ? yes(s.autoGainControl,false) : '—'],
-    ['Kayıt motoru', A.ctx ? (A.ctx.audioWorklet ? 'AudioWorklet' : 'ScriptProcessor (eski)') : '—'],
-    ['Ekranı açık tutma', 'wakeLock' in navigator ? '<span class="good">destekleniyor</span>' : '<span class="warn">yok</span>'],
-  ];
-  $('diag').innerHTML = rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
-  $('persistHint').textContent = persisted ? '' : (IS_IOS && !STANDALONE ? 'iPhone/iPad’de kayıtların silinmemesi için: Paylaş → Ana Ekrana Ekle, sonra uygulamayı oradan açın.' : '');
-  $('bPersist').hidden = persisted;
+// =====================================================================================
+// sheets & dialogs
+// =====================================================================================
+let sheetClose = null;
+function openSheet(title, html, onClose, light){
+  $('shTitle').textContent = title; $('shBody').innerHTML = html;
+  $('sheet').classList.toggle('compact', !!light); $('shBody').scrollTop = 0;
+  document.body.classList.toggle('recsheet', !$('recov').classList.contains('hide'));
+  $('sheet').classList.add('on'); $('scrim').classList.add('on'); $('scrim').classList.toggle('light', !!light);
+  sheetClose = onClose||null;
 }
-$('bPersist').onclick = async ()=>{
-  let ok=false; try{ ok = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : false; }catch(e){}
-  toast(ok ? 'Kayıtlar artık kalıcı.' : (IS_IOS && !STANDALONE ? 'Safari izin vermedi. Paylaş → Ana Ekrana Ekle ile açınca kalıcı olur.' : 'Tarayıcı izin vermedi.'), 4000);
-  renderDiag();
+function closeSheet(){
+  if(!$('sheet').classList.contains('on')) return false;
+  $('sheet').classList.remove('on'); $('scrim').classList.remove('on');
+  const f = sheetClose; sheetClose = null; if(f) f();
+  return true;
+}
+$('shClose').onclick = closeSheet; $('scrim').onclick = closeSheet;
+function popMenu(anchor, items){
+  closeMenu();
+  const m = document.createElement('div'); m.className='menu'; m.id='menu';
+  m.innerHTML = items.map((it,i)=>`<button data-i="${i}" class="${it.dan?'dan':''}">${ic(it.icon||'more')}${esc(it.label)}</button>`).join('');
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect();
+  const mw = m.offsetWidth, mh = m.offsetHeight;
+  m.style.left = clamp(r.right - mw, 8, innerWidth-mw-8)+'px';
+  const below = innerHeight - r.bottom - 8, above = r.top - 8;
+  m.style.top = (mh <= below ? r.bottom + 4 : mh <= above ? r.top - mh - 4 : Math.max(8, innerHeight - mh - 8))+'px';
+  const scr = document.createElement('div'); scr.className='scrim on light'; scr.id='menuScrim'; scr.style.zIndex=60; document.body.appendChild(scr);
+  scr.onclick = closeMenu;
+  m.onclick = e=>{ const b = e.target.closest('button'); if(!b) return; closeMenu(); items[+b.dataset.i].fn(); };
+}
+function closeMenu(){ const m=$('menu'); if(m){ m.remove(); $('menuScrim').remove(); return true; } return false; }
+function dialog(html, bind){
+  closeDialog();
+  const scr = document.createElement('div'); scr.className='scrim on'; scr.id='dlgScrim'; scr.style.zIndex=61; document.body.appendChild(scr);
+  const d = document.createElement('div'); d.className='dialog'; d.id='dlg'; d.innerHTML = html; document.body.appendChild(d);
+  scr.onclick = closeDialog;
+  bind(d);
+}
+function closeDialog(){ const d=$('dlg'); if(d){ d.remove(); $('dlgScrim').remove(); return true; } return false; }
+function confirmDialog(title, text, okLabel, fn){
+  dialog(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="btns"><button class="btn" id="dNo">Vazgeç</button><button class="btn dan" id="dYes">${esc(okLabel)}</button></div>`, d=>{
+    $('dNo').onclick = closeDialog; $('dYes').onclick = ()=>{ closeDialog(); fn(); };
+  });
+}
+function renameDialog(id, name, after){
+  dialog(`<h3>Yeniden adlandır</h3><input class="field" id="dName" maxlength="80" value="${esc(name)}"><div class="btns"><button class="btn" id="dNo">Vazgeç</button><button class="btn pri" id="dYes">Kaydet</button></div>`, d=>{
+    const inp = $('dName'); setTimeout(()=>{ inp.focus(); inp.select(); }, 50);
+    const ok = ()=>{ const r = J(AX.rename(id, inp.value)); if(r && r.ok===false){ toast(r.error); return; } closeDialog(); if(r && r.open) setState(r); after && after(); };
+    $('dNo').onclick = closeDialog; $('dYes').onclick = ok; inp.onkeydown = e=>{ if(e.key==='Enter') ok(); };
+  });
+}
+$('eName').onclick = $('eNameL').onclick = ()=>{ if(S.st) renameDialog(S.st.id, S.st.name, ()=>{}); };
+$('eBack').onclick = ()=>goHome();
+function goHome(){ if(S.busy){ toast('İşlem bitince çıkabilirsiniz (ya da üstteki × ile iptal edin)', 3200); return; } stopPlay(); closeSheet(); AX.close(); S.st=null; S.breath=null; scriptSent=[]; renderHome(); showScreen('home'); }
+$('eMore').onclick = ()=>popMenu($('eMore'), [
+  {label:'Metin (teleprompter)', icon:'text', fn:()=>sheetScript()},
+  {label:'İmlece hata işareti koy', icon:'flag', fn:()=>{ if(S.len<=0) return; S.marks = J(AX.addMark(S.cursor)) || []; S.mIdx = S.marks.indexOf(S.cursor); mstripUpd(); draw(); toast('İşaret eklendi'); }},
+  ...(S.marks.length ? [{label:'Tüm işaretleri sil ('+S.marks.length+')', icon:'trash', fn:()=>confirmDialog('İşaretler silinsin mi?', S.marks.length+' hata işareti kaldırılacak. Ses değişmez.', 'Sil', ()=>{ S.marks = J(AX.clearMarks())||[]; S.mIdx=-1; mstripUpd(); draw(); })}] : []),
+  {label:'Geçmiş', icon:'history', fn:()=>openHistory()},
+  {label:'Orijinal kayda dön', icon:'undo', fn:()=>revertOriginal()},
+  {label:'Depolama ve yer açma', icon:'storage', fn:()=>sheetStorage()},
+  {label:'Kısa tanıtım', icon:'help', fn:()=>showIntro(true)},
+  {label:'Dosya aç', icon:'folder', fn:()=>AX.importFile()},
+  {label:'Ayarlar', icon:'sliders', fn:()=>openSettings()},
+  {label:'Projeyi kapat', icon:'back', fn:()=>goHome()},
+]);
+
+// ---------- jobs ----------
+let busyEl = null, busyTimer = 0;
+function runJob(res, cb){
+  const r = J(res);
+  if(!r || r.ok===false){ toast((r&&r.error)||'Başlatılamadı', 3200); return false; }
+  S.jobCb = cb||null;
+  showBusy();
+  return true;
+}
+function showBusy(){
+  S.busy = true;
+  if(!busyEl){
+    busyEl = document.createElement('div'); busyEl.className='jobbar'; busyEl.setAttribute('role','status');
+    busyEl.innerHTML = `<div class="jl"><div class="jt" id="bLb">İşleniyor</div><div class="bar"><i id="bBar"></i></div><div class="js num" id="bPc">%0</div></div><button id="bCancel" aria-label="İptal">${ic('x')}</button>`;
+    document.body.appendChild(busyEl);
+    $('bCancel').onclick = ()=>{ AX.cancelJob(); $('bLb').textContent='İptal ediliyor…'; };
+    S.jobT0 = performance.now();
+  }
+  clearTimeout(busyTimer);
+  const poll = ()=>{
+    const j = J(AX.job()) || {};
+    if(!busyEl) return;
+    if(!/İptal/.test($('bLb').textContent)) $('bLb').textContent = j.label || 'İşleniyor';
+    const f = j.p||0, p = Math.round(f*100), el = (performance.now() - S.jobT0)/1000;
+    $('bBar').style.width = p+'%';
+    let eta = '';
+    if(f > 0.03 && el > 1.5){ const rem = el*(1-f)/f; eta = rem < 5 ? ' · az kaldı' : ' · yaklaşık '+fmtLeft(rem)+' kaldı'; }
+    $('bPc').textContent = '%'+p+(eta || ' · bu sırada dinleyip gezinebilirsiniz');
+    if(j.busy) busyTimer = setTimeout(poll, 200);
+  };
+  poll();
+}
+function hideBusy(){ S.busy = false; clearTimeout(busyTimer); if(busyEl){ busyEl.remove(); busyEl=null; } }
+
+function onJob(ev){
+  hideBusy();
+  if(ev.state && ev.state.open) setState(ev.state);
+  const cb = S.jobCb; S.jobCb = null;
+  if(!ev.ok){
+    if(ev.op==='import' && ev.cancelled) return;
+    toast(ev.cancelled ? 'İptal edildi' : (ev.error || 'İşlem başarısız'), 3500);
+    if(cb) cb(ev);
+    return;
+  }
+  const r = ev.result;
+  switch(ev.op){
+    case 'import': { const st = J(AX.state()); if(st && st.open) enterEditor(st); toast('Dosya açıldı'); return; }
+    case 'normalize': toast('Normalleştirildi ('+dbs(r.gainDb)+' dB)'); break;
+    case 'noiseReduce': toast('Gürültü azaltıldı'); break;
+    case 'autoNR': toast('Gürültü otomatik azaltıldı ('+r.db+' dB) · ham kayıt için Geri al', 3800); break;
+    case 'heal': toast(r.fixed? (r.fixed===1?'Onarıldı':r.fixed+' nokta onarıldı') : 'Onarılacak klik bulunamadı'); break;
+    case 'declick': toast(r.fixed? r.fixed+' klik/ağız sesi temizlendi' : 'Belirgin klik bulunamadı'); break;
+    case 'fade': toast('Uygulandı'); break;
+    case 'dehum': toast('Uğultu/gürleme temizlendi · önceki hali için Geri al'); break;
+    case 'truncSilence': toast(r.count? r.count+' boşluk kısaltıldı · '+fmtDur(r.removed, S.sr)+' kazanıldı' : 'Kısaltılacak uzun boşluk yok', 3200); if(r.count) S.sel=null; break;
+    case 'preview': S.playing = true; S.ppos = r.a; setPlayIcon(); pollPlay(); vmLoop(); S.ab = false; abUpd(true); break;
+  }
+  if(cb) cb(ev);
+  clampView(); draw(true); updateButtons();
+}
+
+// =====================================================================================
+// effect sheets
+// =====================================================================================
+function bindRange(id, fmt, onchg){ const el=$(id), v=$(id+'V'); const upd=()=>{ v.textContent = fmt(+el.value); onchg && onchg(+el.value); }; el.oninput = upd; upd(); return el; }
+function segBind(id, onpick){ const el=$(id); el.onclick = e=>{ const b=e.target.closest('button'); if(!b) return; el.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); onpick(b.dataset.v); }; }
+
+// ---- noise ----
+function sheetNoise(){
+  const st = S.st || {};
+  const s = selOrNull();
+  const have = !!st.noise;
+  const selOk = s && (s.b-s.a) >= S.sr*0.25;
+  openSheet('Gürültü azaltma', `
+    <div class="step ${have?'done':''}"><i>1</i><div><b>Gürültü örneği</b> ${have? (st.noiseSrc==='room' ? '<span class="badge ok">ortam kaydından · '+dbTxt(st.roomDb)+' dB</span>' : '<span class="badge ok">alındı · '+fmtDur(st.noiseB-st.noiseA,S.sr)+'</span>'):''}
+      <div class="hint">Yalnızca oda sesinin/uğultunun olduğu, konuşmasız bir bölümü (en az 0,3 sn) seçin. Seçim yoksa uygulama en sessiz bölümü kendisi bulur.</div>
+      <button class="btn" id="nProf" style="width:100%">${selOk? 'Seçimden örnek al' : 'En sessiz bölümü otomatik bul'}</button></div></div>
+    <div class="step" style="margin-top:14px"><i>2</i><div><b>Azalt</b><div style="margin-top:6px">${targetLabel()}</div>
+      <div class="row"><label>Azaltma miktarı</label><span class="v num" id="nRedV"></span></div><input type="range" id="nRed" min="3" max="30" step="1" value="${S.settings.nrRed||12}">
+      <div class="row"><label>Hassasiyet</label><span class="v num" id="nSensV"></span></div><input type="range" id="nSens" min="0" max="15" step="0.5" value="${S.settings.nrSens||6}">
+      <div class="hint">Önce düşük değerle deneyin. Fazla azaltma sesi “metalik” yapar. Hassasiyet arttıkça daha çok şey gürültü sayılır.<br>İsterseniz kayıttan önce oda sesini otomatik alıp temizliği kayıttan sonra kendiliğinden uygulatabilirsiniz: Ayarlar › Gürültü.</div>
+      <div class="btns"><button class="btn" id="nPrev" ${have?'':'disabled'}>${ic('headset')}Dinle</button><button class="btn pri" id="nApply" ${have?'':'disabled'}>Uygula</button></div>
+    </div></div>`);
+  bindRange('nRed', v=>v+' dB'); bindRange('nSens', v=>v.toFixed(1).replace('.',',')+' dB');
+  const prm = ()=>{ const red=+$('nRed').value, sens=+$('nSens').value; S.settings.nrRed=red; S.settings.nrSens=sens; AX.setSettings(JSON.stringify({nrRed:red,nrSens:sens})); return {red,sens}; };
+  $('nProf').onclick = ()=>{
+    const a = selOk? s.a:0, b = selOk? s.b:0;
+    runJob(AX.noiseProfile(a,b), ev=>{ if(ev.ok){ toast(ev.result.auto? 'En sessiz bölüm bulundu ve örnek alındı':'Gürültü örneği alındı'); if(ev.result.auto){ S.sel={a:ev.result.a,b:ev.result.b}; } sheetNoise(); draw(); } });
+  };
+  $('nPrev').onclick = ()=>{ const p=prm(); const [a,b]=targetRange(); runJob(AX.preview('noiseReduce', a, b, JSON.stringify(p))); };
+  $('nApply').onclick = ()=>{ const p=prm(); const [a,b]=targetRange(); stopPlay(); closeSheet(); runJob(AX.noiseReduce(a, b, p.red, p.sens)); };
+}
+
+// ---- breath ----
+function sheetBreath(){
+  const [a,b] = targetRange();
+  const html = `${targetLabel()}
+    <div class="hint">Bulunan nefesler dalgada turuncu görünür. Atlamak istediğinize dokunun. Kısmak, tamamen silmekten daha doğal duyulur.</div>
+    <div class="row"><label>Hassasiyet</label><span class="v num" id="bSensV"></span></div><input type="range" id="bSens" min="0" max="1" step="0.05" value="${S.settings.brSens!=null?S.settings.brSens:0.5}">
+    <div id="bRes"></div>`;
+  openSheet('Nefes temizleme', html, ()=>{ if(S.breath && !S.breath.keep){ S.breath=null; draw(); } }, true);
+  bindRange('bSens', v=>Math.round(v*100)+'%');
+  renderBreathRes();
+  function find(){ const sens=+$('bSens').value; S.settings.brSens=sens; AX.setSettings(JSON.stringify({brSens:sens})); runJob(AX.breathDetect(a,b,sens), ev=>{ if(ev.ok){ const arr = ev.result||[]; const regs=[]; for(let i=0;i+1<arr.length;i+=2) regs.push({a:arr[i],b:arr[i+1],on:true}); S.breath={regions:regs, idx:regs.length?0:-1}; if(regs.length) focusBreath(0,false); renderBreathRes(); draw(); } }); }
+  function renderBreathRes(){
+    const el = $('bRes'); if(!el) return;
+    const br = S.breath;
+    if(!br){ el.innerHTML = `<div class="btns"><button class="btn pri" id="bFind">Nefesleri bul</button></div>`; $('bFind').onclick = find; return; }
+    const on = br.regions.filter(r=>r.on).length;
+    el.innerHTML = `<div class="row" style="margin-top:4px"><label><b>${br.regions.length}</b> nefes bulundu · <b>${on}</b> seçili</label><button class="pill" id="bAgain">Yeniden ara</button></div>
+      ${br.regions.length? `<div class="btns" style="margin-top:4px"><button class="btn" id="bPrev">${ic('prev')}</button><button class="btn" id="bPlay">${ic('play')}<span class="num">${br.idx+1}/${br.regions.length}</span></button><button class="btn" id="bNext">${ic('next')}</button><button class="btn" id="bTog">${br.regions[br.idx]&&br.regions[br.idx].on? 'Atla':'Dahil et'}</button></div>
+      <div class="seg" id="bMode" style="margin-top:14px"><button data-v="kis" class="${(S.settings.brMode||'kis')==='kis'?'on':''}">Kıs</button><button data-v="sus" class="${S.settings.brMode==='sus'?'on':''}">Tamamen sustur</button></div>
+      <div id="bDbRow"><div class="row"><label>Kısma miktarı</label><span class="v num" id="bDbV"></span></div><input type="range" id="bDb" min="-30" max="-6" step="1" value="${S.settings.brDb||-15}"></div>
+      <div class="btns"><button class="btn pri" id="bApply" ${on?'':'disabled'}>Uygula (${on})</button></div>` : `<div class="hint">Nefes bulunamadı. Hassasiyeti artırıp yeniden arayın.</div>`}`;
+    $('bAgain').onclick = find;
+    if(!br.regions.length) return;
+    $('bPrev').onclick = ()=>{ focusBreath(Math.max(0, br.idx-1), true); renderBreathRes(); };
+    $('bNext').onclick = ()=>{ focusBreath(Math.min(br.regions.length-1, br.idx+1), true); renderBreathRes(); };
+    $('bPlay').onclick = ()=>focusBreath(br.idx, true);
+    $('bTog').onclick = ()=>{ const r = br.regions[br.idx]; r.on=!r.on; renderBreathRes(); draw(); };
+    const modeUpd = ()=>{ $('bDbRow').style.display = (S.settings.brMode||'kis')==='kis' ? '' : 'none'; };
+    segBind('bMode', v=>{ S.settings.brMode=v; AX.setSettings(JSON.stringify({brMode:v})); modeUpd(); }); modeUpd();
+    bindRange('bDb', v=>v+' dB');
+    $('bApply').onclick = ()=>{
+      const sel = br.regions.filter(r=>r.on); const flat=[]; sel.forEach(r=>{ flat.push(r.a, r.b); });
+      const db = (S.settings.brMode||'kis')==='kis' ? +$('bDb').value : -100;
+      S.settings.brDb = +$('bDb').value; AX.setSettings(JSON.stringify({brDb:S.settings.brDb}));
+      stopPlay();
+      const r = J(AX.breathApply(JSON.stringify(flat), db));
+      if(r && r.ok!==false){ S.breath=null; closeSheet(); applyResult(r, sel.length+' nefes '+(db<=-90?'susturuldu':'kısıldı')); } else toast((r&&r.error)||'Uygulanamadı');
+    };
+  }
+  sheetBreath.render = renderBreathRes;
+}
+function focusBreath(i, play){
+  const br = S.breath; if(!br || !br.regions.length) return;
+  br.idx = i; const r = br.regions[i];
+  const vis = W*S.spp, len = r.b-r.a;
+  const want = Math.max(len*6, S.sr*2.5);
+  if(vis > want*3 || vis < len*1.5){ S.spp = clamp(want/W, minSpp(), maxSpp()); }
+  S.start = (r.a+r.b)/2 - W*S.spp/2; clampView(); draw();
+  if(play){ startPlay(Math.max(0, r.a - Math.round(S.sr*0.6)), Math.min(S.len, r.b + Math.round(S.sr*0.6))); }
+}
+function toggleBreathAt(t){
+  const br = S.breath; if(!br) return false;
+  const i = br.regions.findIndex(r=>t>=r.a && t<=r.b);
+  if(i<0) return false;
+  br.regions[i].on = !br.regions[i].on; br.idx = i; vib();
+  if(sheetBreath.render) sheetBreath.render();
+  draw(); return true;
+}
+
+// ---- heal ----
+function doHeal(){
+  const s = selOrNull();
+  if(!s){
+    openSheet('Onar', `<div class="hint">Klik, pıtırtı, ağız şapırtısı veya kısa bir parazit duyduğunuz yeri yakınlaştırın ve <b>sadece o küçük bölümü</b> seçin, sonra Onar'a basın.<br><br>Çok kısa seçimler (≈40 ms'ye kadar) çevresindeki sese göre yeniden oluşturulur; daha uzun seçimlerde içindeki klikler bulunup onarılır.</div><div class="btns"><button class="btn pri" id="hOk">Anladım</button></div>`);
+    $('hOk').onclick = closeSheet; return;
+  }
+  runJob(AX.heal(s.a, s.b));
+}
+
+// ---- click ----
+function sheetClick(){
+  openSheet('Ağız sesi ve klik temizleme', `${targetLabel()}
+    <div class="hint">Dudak/dil şapırtısı, kısa tıkırtı ve dijital klikleri bulup çevresindeki sesle onarır.</div>
+    <div class="row"><label>Hassasiyet</label><span class="v num" id="cSensV"></span></div><input type="range" id="cSens" min="0" max="1" step="0.05" value="${S.settings.ckSens!=null?S.settings.ckSens:0.5}">
+    <div class="btns"><button class="btn" id="cPrev">${ic('headset')}Dinle</button><button class="btn pri" id="cApply">Uygula</button></div>`);
+  bindRange('cSens', v=>Math.round(v*100)+'%');
+  const sens = ()=>{ const v=+$('cSens').value; S.settings.ckSens=v; AX.setSettings(JSON.stringify({ckSens:v})); return v; };
+  $('cPrev').onclick = ()=>{ const [a,b]=targetRange(); runJob(AX.preview('declick', a, b, JSON.stringify({sens:sens()}))); };
+  $('cApply').onclick = ()=>{ const [a,b]=targetRange(); const v=sens(); stopPlay(); closeSheet(); runJob(AX.declick(a,b,v)); };
+}
+
+// ---- mains hum ----
+function sheetHum(){
+  const [a0,b0] = targetRange();
+  const d = J(AX.humDetect(a0, b0)) || {};
+  const found = d.ok!==false && d.prom >= 5;
+  const base0 = found ? (Math.abs(d.f0-60) < Math.abs(d.f0-50) ? 60 : 50) : (+S.settings.humBase||50);
+  const det = found ? 'Uğultu bulundu: <b class="num">'+String(d.f0).replace('.',',')+' Hz</b> şebeke frekansı, çevresinden <b class="num">'+Math.round(d.prom)+' dB</b> belirgin.'
+                    : 'Belirgin bir şebeke uğultusu bulunamadı. Yine de uygulayabilirsiniz; konuşmaya etkisi çok azdır.';
+  openSheet('Uğultu ve gürleme', `${targetLabel()}
+    <div class="hint">Şarj aleti, adaptör, lamba ya da kablo kaynaklı 50/60 Hz uğultuyu ve harmoniklerini çok dar filtrelerle siler. İsterseniz 80 Hz altındaki gürlemeyi de keser.</div>
+    <div class="hint" style="color:var(--text)">${det}</div>
+    <div class="row"><label>Şebeke frekansı</label></div>
+    <div class="seg" id="hBase"><button data-v="50" class="${base0===50?'on':''}">50 Hz (Türkiye, Avrupa)</button><button data-v="60" class="${base0===60?'on':''}">60 Hz</button></div>
+    <div class="row"><label>Harmonik sayısı</label></div>
+    <div class="seg" id="hHarm">${[0,4,8,12].map(v=>`<button data-v="${v}" class="${(S.settings.humHarm!=null?+S.settings.humHarm:8)===v?'on':''}">${v||'Uğultu yok'}</button>`).join('')}</div>
+    <div class="set-row" style="padding:12px 0 2px"><label>80 Hz altını da kes<small>Klima, trafik, masa titreşimi gibi gürlemeleri azaltır.</small></label><button class="switch ${S.settings.humLow!==false?'on':''}" id="hLow"></button></div>
+    <div class="btns"><button class="btn" id="hPrev">${ic('headset')}Dinle</button><button class="btn pri" id="hApply">Uygula</button></div>`);
+  let base = base0, harm = S.settings.humHarm!=null ? +S.settings.humHarm : 8, low = S.settings.humLow!==false;
+  segBind('hBase', v=>{ base = +v; }); segBind('hHarm', v=>{ harm = +v; });
+  $('hLow').onclick = e=>{ low = !low; e.currentTarget.classList.toggle('on', low); };
+  const f0 = ()=> found && Math.abs(d.f0-base) < 1 ? d.f0 : base;
+  const save = ()=>{ const o = {humBase:base, humHarm:harm, humLow:low}; AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o); };
+  const none = ()=>{ if(!harm && !low){ toast('Uğultu ya da 80 Hz kesimden en az birini seçin'); return true; } return false; };
+  $('hPrev').onclick = ()=>{ if(none()) return; save(); const [a,b]=targetRange(); runJob(AX.preview('dehum', a, b, JSON.stringify({f0:f0(), harm, lowCut:low}))); };
+  $('hApply').onclick = ()=>{ if(none()) return; save(); const [a,b]=targetRange(); stopPlay(); closeSheet(); runJob(AX.dehum(a, b, f0(), harm, low)); };
+}
+
+// ---- truncate silence ----
+function sheetTrunc(){
+  openSheet('Boşlukları kısalt', `${targetLabel()}
+    <div class="hint">Cümle aralarındaki uzun sessizlikleri kısaltır. Konuşmaya dokunulmaz.</div>
+    <div class="row"><label>Sessizlik eşiği</label><span class="v num" id="tThrV"></span></div><input type="range" id="tThr" min="-70" max="-30" step="1" value="${S.settings.trThr||-45}">
+    <div class="row"><label>Bundan uzun boşluklar</label><span class="v num" id="tMinV"></span></div><input type="range" id="tMin" min="0.3" max="3" step="0.1" value="${S.settings.trMin||1.0}">
+    <div class="row"><label>Şu uzunluğa insin</label><span class="v num" id="tKeepV"></span></div><input type="range" id="tKeep" min="0.1" max="1.5" step="0.05" value="${S.settings.trKeep||0.5}">
+    <div class="hint">İpucu: eşiği kaydınızın gürültü tabanına göre seçin (Seviye › Analiz). Gürültü azaltmadan sonra −50 dB civarı iyi çalışır.</div>
+    <div class="btns"><button class="btn pri" id="tApply">Uygula</button></div>`);
+  const sec = v=>v.toFixed(2).replace(/0$/,'').replace('.',',')+' sn';
+  bindRange('tThr', v=>v+' dB'); bindRange('tMin', sec); bindRange('tKeep', sec);
+  $('tApply').onclick = ()=>{
+    const thr=+$('tThr').value, mn=+$('tMin').value, kp=Math.min(+$('tKeep').value, mn);
+    AX.setSettings(JSON.stringify({trThr:thr,trMin:mn,trKeep:kp})); Object.assign(S.settings,{trThr:thr,trMin:mn,trKeep:kp});
+    const [a,b]=targetRange(); closeSheet(); runJob(AX.truncSilence(a,b,thr,mn*1000,kp*1000));
+  };
+}
+
+// ---- silence insert ----
+function sheetSilence(){
+  openSheet('Boşluk ekle', `<div class="hint">İmlecin olduğu yere sessizlik eklenir${selOrNull()?' (seçimin başına)':''}.</div>
+    <div class="seg" id="gSeg"><button data-v="250">0,25 sn</button><button data-v="500" class="on">0,5 sn</button><button data-v="1000">1 sn</button><button data-v="2000">2 sn</button></div>
+    <div class="btns"><button class="btn pri" id="gOk">Ekle</button></div>`);
+  let ms = 500; segBind('gSeg', v=>ms=+v);
+  $('gOk').onclick = ()=>{ const p = selOrNull()? S.sel.a : S.cursor; closeSheet(); applyResult(J(AX.insertSilence(p, ms)), 'Boşluk eklendi'); };
+}
+
+// ---- normalize ----
+function sheetNorm(){
+  const t0 = S.settings.norm!=null ? +S.settings.norm : -3;
+  openSheet('Normalleştir', `${targetLabel()}
+    <div class="hint">En yüksek tepe noktasını hedef seviyeye getirir; tüm ses aynı oranda yükseltilir ya da alçaltılır.</div>
+    <div class="seg" id="nmSeg">${[-1,-2,-3,-6].map(v=>`<button data-v="${v}" class="${v===t0?'on':''}">${String(v).replace('-','−')} dB</button>`).join('')}</div>
+    <div class="btns"><button class="btn pri" id="nmOk">Uygula</button></div>`);
+  let t = t0; segBind('nmSeg', v=>t=+v);
+  $('nmOk').onclick = ()=>{ AX.setSettings(JSON.stringify({norm:t})); S.settings.norm=t; const [a,b]=targetRange(); closeSheet(); runJob(AX.normalize(a,b,t)); };
+}
+
+// ---- gain ----
+function sheetGain(){
+  openSheet('Gain', `${targetLabel()}
+    <div class="row"><label>Değişim</label><span class="v num" id="gnV"></span></div><input type="range" id="gn" min="-20" max="20" step="0.5" value="0">
+    <div class="seg" id="gnSeg"><button data-v="-6">−6</button><button data-v="-3">−3</button><button data-v="-1">−1</button><button data-v="1">+1</button><button data-v="3">+3</button><button data-v="6">+6</button></div>
+    <div class="btns"><button class="btn pri" id="gnOk">Uygula</button></div>`);
+  bindRange('gn', v=>dbs(v)+' dB');
+  segBind('gnSeg', v=>{ $('gn').value = v; $('gn').oninput(); });
+  $('gnOk').onclick = ()=>{ const v=+$('gn').value; if(!v){ closeSheet(); return; } const [a,b]=targetRange(); closeSheet(); applyResult(J(AX.gain(a,b,v)), 'Kazanç '+dbs(v)+' dB'); };
+}
+
+// ---- analyze ----
+function doAnalyze(){
+  const [a,b] = targetRange();
+  runJob(AX.analyze(a,b), ev=>{
+    if(!ev.ok) return;
+    const r = ev.result;
+    const mk = (ok, na)=> na? '<span class="mark na">—</span>' : ok? '<span class="mark ok">Uygun</span>' : '<span class="mark no">Dışında</span>';
+    openSheet('Seviye analizi', `${targetLabel()}
+      <div class="meters">
+        <span class="k">Tepe seviye</span><span class="val num">${dbs(r.peak)} dBFS</span>${mk(r.peak<=-2.95 && r.peak>-12)}
+        <span class="k">Ortalama (RMS)</span><span class="val num">${dbs(r.rms)} dB</span>${mk(r.rms>=-23 && r.rms<=-18)}
+        <span class="k">Konuşma RMS</span><span class="val num">${dbs(r.speech)} dB</span>${mk(0,1)}
+        <span class="k">Gürültü tabanı</span><span class="val num">${dbs(r.floor)} dB</span>${mk(r.floor<=-60, r.floor<-200)}
+      </div>
+      <div class="hint">Yaygın sesli kitap teslim ölçütü: tepe en fazla −3 dB, ortalama −23…−18 dB, gürültü tabanı −60 dB'nin altı. Reklam ve dublaj işlerinde müşterinin istediği değerleri esas alın.${r.digital?'<br><br>Kayıtta tamamen dijital sessiz bölümler var; bazı platformlar oda sesi tercih eder.':''}</div>
+      <div class="btns"><button class="btn" id="anNorm">Normalleştir…</button><button class="btn pri" id="anOk">Tamam</button></div>`);
+    $('anOk').onclick = closeSheet; $('anNorm').onclick = ()=>{ closeSheet(); setTimeout(sheetNorm, 250); };
+  });
+}
+
+// ---- storage ----
+function sheetStorage(){
+  const s = J(AX.storage()) || {};
+  openSheet('Depolama ve yer açma', `
+    <div class="meters"><span class="k">Bu proje</span><span class="val num">${fmtBytes(s.project||0)}</span><span></span>
+      <span class="k">Tüm kayıtlar</span><span class="val num">${fmtBytes(s.used||0)}</span><span></span>
+      <span class="k">Boş alan</span><span class="val num">${fmtBytes(s.free||0)}</span><span></span></div>
+    <div class="hint">Geri alma geçmişi, gürültü azaltma gibi işlemlerden önceki ses dosyalarını saklar. Geçmişi temizlemek bu dosyaları siler; şu anki kayıt hiç değişmez.</div>
+    <div class="btns" style="flex-direction:column">
+      <button class="btn" id="stKeep" ${s.reclaim>0?'':'disabled'}>${ic('history')}Geçmişi temizle, orijinal kalsın · ${fmtBytes(s.reclaim||0)}</button>
+      <button class="btn dan" id="stAll" ${s.reclaimAll>0?'':'disabled'}>${ic('trash')}Orijinal dahil temizle · ${fmtBytes(s.reclaimAll||0)}</button>
+    </div>
+    ${!(s.reclaimAll>0) ? '<div class="hint">Temizlenecek eski dosya yok.</div>' : ''}`);
+  const go = keep=>{ const r = J(AX.clearHistory(keep)); if(r && r.ok!==false){ applyResult(r); closeSheet(); toast(fmtBytes(r.freed||0)+' yer açıldı'); } else toast((r&&r.error)||'Temizlenemedi'); };
+  $('stKeep').onclick = ()=>confirmDialog('Geçmiş temizlensin mi?', 'Geri alma adımları silinir. Orijinal kayıt korunur, şu anki hâl değişmez.', 'Temizle', ()=>go(true));
+  $('stAll').onclick = ()=>confirmDialog('Orijinal de silinsin mi?', 'Geri alma adımları ve ilk kaydın işlenmemiş hâli silinir. Bu geri alınamaz; şu anki hâl yeni orijinal olur.', 'Sil', ()=>go(false));
+}
+
+// ---- history ----
+function openHistory(){
+  stopPlay();
+  const h = J(AX.history());
+  if(!h || h.ok===false){ toast((h&&h.error)||'Geçmiş açılamadı'); return; }
+  const row = (it,k)=>`<button class="hrow ${it.t} ${it.rec?'rec':''}" data-k="${k}">${ic(it.rec?'mic':'dot')}<span class="hl">${esc(it.l)}</span>${k===h.cur?'<span class="badge ok">şu an</span>':''}<span class="hd num">${fmtT(it.len,S.sr,1)}</span></button>`;
+  const fut = h.items.map((it,k)=>[it,k]).filter(x=>x[1]>h.cur).reverse();
+  const past = h.items.map((it,k)=>[it,k]).filter(x=>x[1]<=h.cur).reverse();
+  const canOrig = h.hasFirst && !h.atFirst;
+  openSheet('Geçmiş', `
+    <div class="btns" style="margin-top:0"><button class="btn ${canOrig?'pri':''}" id="hOrig" ${canOrig?'':'disabled'}>${ic('undo')}Orijinal kayda dön</button></div>
+    <div class="hint" style="margin-top:8px">Orijinal, ilk kaydın hiç dokunulmamış hâlidir. Sonraki kayıtları da korumak istiyorsanız aşağıdan ilgili “Kayıt” adımına dokunun. Her adıma istediğiniz an geri dönebilirsiniz; işlemler kayıpsızdır.</div>
+    ${fut.length? `<div class="hsep">Geri alınanlar</div>`+fut.map(x=>row(x[0],x[1])).join('') : ''}
+    <div class="hsep">Adımlar (en yeni üstte)</div>
+    ${past.map(x=>row(x[0],x[1])).join('')}`);
+  $('shBody').querySelectorAll('.hrow').forEach(b=>b.onclick = ()=>{
+    const k = +b.dataset.k; if(k===h.cur) return;
+    const label = h.items[k].l;
+    const r = J(AX.historyJump(k));
+    if(applyResult(r)){ toast('“'+label+'” adımına dönüldü'); fitIfSmall(); openHistory(); }
+  });
+  $('hOrig').onclick = ()=>{ closeSheet(); revertOriginal(); };
+}
+function revertOriginal(){
+  stopPlay();
+  const r = J(AX.revertOriginal());
+  if(applyResult(r)){ fitIfSmall(); toast('Orijinal kayda dönüldü · Yinele ya da Geçmiş ile geri gelebilirsiniz', 3600); }
+}
+function fitIfSmall(){ if(W*S.spp > S.len*1.05 || S.start > S.len) fit(); }
+(function(){
+  for(const id of ['eUndo','eRedo']){
+    const b = $(id); let t = 0, long = false;
+    b.addEventListener('pointerdown', ()=>{ long = false; clearTimeout(t); t = setTimeout(()=>{ long = true; vib(); openHistory(); }, 480); });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev, ()=>clearTimeout(t)));
+    b.addEventListener('click', e=>{ if(long){ e.stopImmediatePropagation(); e.preventDefault(); long = false; } }, true);
+    b.addEventListener('contextmenu', e=>e.preventDefault());
+  }
+})();
+
+// ---- export ----
+function sheetExport(){
+  if(S.len<=0){ toast('Dışa aktarılacak ses yok'); return; }
+  const st = S.settings;
+  let fmt = st.fmt||'wav16', outSr = +(st.outSr||0), useSel = !!selOrNull();
+  const kb = {mp3:+(st.mp3||192), m4a:+(st.m4a||192)};
+  openSheet('Dışa aktar', `
+    <div class="row" style="margin-top:0"><label>Hazır ayar</label></div>
+    <div class="seg" id="xPre"><button data-v="acx">Sesli kitap</button><button data-v="studio">Stüdyo</button><button data-v="share">Paylaşım</button></div>
+    <div id="xPreInfo"></div>
+    <div class="row"><label>Dosya adı</label></div><input class="field" id="xName" maxlength="80" value="${esc(S.st.name)}">
+    <div class="row"><label>Biçim</label></div>
+    <div class="seg" id="xFmt"><button data-v="wav16">WAV 16-bit</button><button data-v="wav24">WAV 24-bit</button><button data-v="mp3">MP3</button><button data-v="m4a">M4A (AAC)</button></div>
+    <div id="xKbRow"><div class="row"><label>Bit hızı</label></div><div class="seg" id="xKb"><button data-v="128">128</button><button data-v="192">192</button><button data-v="256">256</button><button data-v="320">320 kbps</button></div></div>
+    <div class="row"><label>Örnekleme hızı</label></div>
+    <div class="seg" id="xSr"><button data-v="0">Proje (${(S.sr/1000).toString().replace('.',',')} kHz)</button><button data-v="44100">44,1 kHz</button><button data-v="48000">48 kHz</button></div>
+    <div class="row"><label>Aralık</label></div>
+    <div class="seg" id="xRng"><button data-v="all">Tüm kayıt</button><button data-v="sel" ${selOrNull()?'':'disabled'}>Seçim${selOrNull()?' · '+fmtDur(S.sel.b-S.sel.a,S.sr):''}</button></div>
+    <div class="btns"><button class="btn pri" id="xGo">${ic('export')}Dışa aktar</button></div>
+    <div id="xRes"></div>`);
+  const mark = (id, v)=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.v===String(v)));
+  const sync = ()=>{ mark('xFmt', fmt); $('xKbRow').style.display = (fmt==='mp3'||fmt==='m4a')? '' : 'none'; if(fmt==='mp3'||fmt==='m4a') mark('xKb', kb[fmt]); mark('xSr', outSr===S.sr?0:outSr); mark('xRng', useSel?'sel':'all'); };
+  segBind('xFmt', v=>{ fmt=v; sync(); }); segBind('xKb', v=>{ kb[fmt]=+v; }); segBind('xSr', v=>{ outSr=+v; }); segBind('xRng', v=>{ useSel = v==='sel'; });
+  if(fmt==='m4a' && kb.m4a>256) kb.m4a=256;
+  const PRESETS = {
+    acx:{fmt:'mp3', kb:192, outSr:44100, info:'Sesli kitap platformlarının (ör. ACX) teslim biçimi: MP3 192 kbps sabit bit hızı, 44,1 kHz, mono. Seviyeler aşağıda kontrol edilir.'},
+    studio:{fmt:'wav24', outSr:48000, info:'Stüdyo/ajans teslimi: kayıpsız WAV 24-bit, 48 kHz. Müşteri başka değer istemedikçe en güvenli seçim.'},
+    share:{fmt:'m4a', kb:128, outSr:0, info:'Hızlı paylaşım: küçük M4A (AAC 128 kbps). Onay ve ön dinleme için; teslim için değil.'}
+  };
+  const deliveryCheck = ()=>{
+    const s0 = useSel && selOrNull();
+    runJob(AX.analyze(s0? s0.a:0, s0? s0.b:0), ev=>{
+      if(!ev.ok || !$('xPreInfo')) return;
+      const r = ev.result;
+      const row = (k, v, ok, need)=>`<span class="k">${k}</span><span class="val num">${v}</span><span class="mark ${ok?'ok':'no'}">${ok?'Uygun':need}</span>`;
+      const pkOk = r.peak <= -2.95, rmsOk = r.rms >= -23 && r.rms <= -18, flOk = r.floor <= -60;
+      $('xPreInfo').innerHTML = `<div class="hint">${PRESETS.acx.info}</div>
+        <div class="meters">${row('Tepe', dbs(r.peak)+' dB', pkOk, 'en fazla −3')}${row('Ortalama (RMS)', dbs(r.rms)+' dB', rmsOk, '−23 … −18')}${row('Gürültü tabanı', dbs(r.floor)+' dB', flOk, '−60 altı')}</div>
+        ${pkOk && rmsOk && flOk ? '<div class="hint" style="color:var(--ok)">Seviyeler teslim ölçütlerine uygun.</div>' :
+          `<div class="hint">${!pkOk ? 'Tepe çok yüksek: önce −3 dB normalleştirin. ' : ''}${!rmsOk ? (r.rms < -23 ? 'Ortalama düşük: daha yakın okuyun ya da gain’i artırın. ' : 'Ortalama yüksek: gain’i biraz düşürün. ') : ''}${!flOk ? 'Dip ses yüksek: Temizle › Gürültü ve Uğultu/gürleme araçlarını deneyin.' : ''}</div>
+           ${!pkOk ? '<div class="btns"><button class="btn" id="xNorm">−3 dB normalleştir</button></div>' : ''}`}`;
+      if($('xNorm')) $('xNorm').onclick = ()=>{ const s1 = useSel && selOrNull(); runJob(AX.normalize(s1? s1.a:0, s1? s1.b:0, -3), e2=>{ if(e2.ok){ toast('−3 dB normalleştirildi'); deliveryCheck(); } }); };
+    });
+  };
+  segBind('xPre', v=>{
+    const pr = PRESETS[v]; fmt = pr.fmt; outSr = pr.outSr; if(pr.kb) kb[fmt] = pr.kb; sync();
+    $('xPreInfo').innerHTML = `<div class="hint">${pr.info}</div>`;
+    if(v==='acx') deliveryCheck();
+  });
+  sync();
+  $('xGo').onclick = ()=>{
+    const name = $('xName').value.trim() || S.st.name;
+    AX.setSettings(JSON.stringify({fmt, outSr, mp3:kb.mp3, m4a:kb.m4a})); Object.assign(S.settings,{fmt,outSr,mp3:kb.mp3,m4a:kb.m4a});
+    const s = useSel && selOrNull();
+    const opts = {fmt, kbps: fmt==='m4a'? Math.min(256,kb.m4a) : kb.mp3, outSr, name, a: s? s.a:0, b: s? s.b:0};
+    runJob(AX.export(JSON.stringify(opts)), ev=>{
+      if(!ev.ok) return;
+      const r = ev.result;
+      $('xRes').innerHTML = `<div class="hint" style="margin-top:16px"><b style="color:var(--text)">${esc(r.name)}</b> · ${fmtBytes(r.bytes)} hazır.</div>
+        <div class="btns"><button class="btn" id="xSave">${ic('save')}Cihaza kaydet</button><button class="btn pri" id="xShare">${ic('share')}Paylaş</button></div>`;
+      $('xSave').onclick = ()=>AX.saveExport();
+      $('xShare').onclick = ()=>AX.shareExport();
+    });
+  };
+}
+$('eExport').onclick = ()=>{ stopPlay(); sheetExport(); };
+
+// ---- settings ----
+function openSettings(){
+  loadSettings();
+  const st = S.settings;
+  const devs = J(AX.devices()) || [];
+  const sw = (id,on)=>`<button class="switch ${on?'on':''}" id="${id}" aria-pressed="${on}"></button>`;
+  const opt = (v,l,cur)=>`<option value="${v}" ${String(cur)===String(v)?'selected':''}>${esc(l)}</option>`;
+  openSheet('Ayarlar', `
+    <div class="set-sec">Kayıt</div>
+    <div class="set-row"><label>Örnekleme hızı<small>Yeni kayıtlar için. Seslendirme için 48 kHz önerilir.</small></label><select class="field" id="sSr">${opt(48000,'48 kHz',st.sr)}${opt(44100,'44,1 kHz',st.sr)}</select></div>
+    <div class="set-row"><label>Kayıt çözünürlüğü<small>32-bit kayan nokta, ses kartı/profesyonel mikrofonla en temiz sonucu verir ve işlemlerde kalite kaybını önler. Dakikada ~11 MB yer kaplar.</small></label><select class="field" id="sRes">${opt('float','32-bit float',st.res)}${opt('16','16-bit',st.res)}</select></div>
+    <div class="set-row"><label>Mikrofon işleme<small>Otomatik: dahili mikrofonda “Ses tanıma”, ses kartında “Ham giriş” kullanılır. Telefonun otomatik ses ayarları her ikisinde de kapalıdır. Dahili mikrofonda ham giriş çok kısık gelir; yüksek gain cızırtı yapar.</small></label><select class="field" id="sSrc">${opt('auto','Otomatik (önerilen)',st.src)}${opt('raw','Ham giriş',st.src)}${opt('voice','Ses tanıma',st.src)}${opt('mic','Standart',st.src)}</select></div>
+    <div class="set-row"><label>Giriş cihazı<small>Yalnızca kayıt yapılabilen girişler listelenir. USB ses kartı veya mikrofon takılıysa burada görünür; takıp çıkardıktan sonra Ayarlar’ı yeniden açın.</small></label><select class="field" id="sDev">${(()=>{const dv=devs.some(x=>x.id==st.dev)?st.dev:0; return opt(0,'Otomatik',dv)+devs.map(d=>opt(d.id, d.kind+(d.name?' · '+d.name:''), dv)).join('');})()}</select></div>
+    <div class="set-row"><label>Giriş kanalı<small>Ses kartında mikrofon hangi girişe takılıysa onu seçin. “Karışım” iki girişin ortalamasını alır.</small></label><select class="field" id="sCh">${opt('mix','Mono karışım',st.ch)}${opt('l','Giriş 1 (sol)',st.ch)}${opt('r','Giriş 2 (sağ)',st.ch)}</select></div>
+    <div class="set-row"><label>Alçak kesim (80 Hz)<small>Kayıt sırasında 80 Hz altını keser: masa ve zemin titreşimi, klima, trafik gürlemesi, mikrofon tutma sesi. Konuşmaya etkisi çok azdır.</small></label>${sw('sLow', st.lowCut!==false)}</div>
+    <div class="set-row"><label>Kayıttan önce seviye ekranı<small>Kayda basınca önce mikrofon açılır; gain’i hedef aralığa getirip sonra kayda başlarsınız.</small></label>${sw('sPrep', st.prep!==false)}</div>
+    <div class="set-row"><label>Hedef tepe aralığı<small>Dalga formunda, cetvelde ve kayıt ölçerinde sarı bantla gösterilir.</small></label><select class="field" id="sBand">${opt('off','Kapalı',st.band)}${opt('-12,-6','−12 … −6 dB',st.band)}${opt('-9,-6','−9 … −6 dB',st.band||'-9,-6')}${opt('-6,-3','−6 … −3 dB',st.band)}</select></div>
+    <div class="set-row"><label>Geri sayım<small>Kayıt başlamadan önce.</small></label><select class="field" id="sCd">${opt(0,'Yok',st.countdown)}${opt(3,'3 sn',st.countdown)}${opt(5,'5 sn',st.countdown)}</select></div>
+    <div class="set-row"><label>Düzeltme kaydında ön dinleme<small>Kayda girmeden önce çalınacak süre.</small></label><select class="field" id="sPre">${[1,2,3,4,5].map(v=>opt(v,v+' sn',st.preroll)).join('')}</select></div>
+    <div class="set-sec">Gürültü</div>
+    <div class="set-row"><label>Kayıttan önce ortam sesi<small>Kayda basınca 3 sn sessiz durursunuz. Oda sesi ölçülür ve gürültü örneği olarak saklanır; kayda eklenmez.</small></label><select class="field" id="sRoom">${opt('off','Kapalı',st.room)}${opt('first','Projede ilk kayıtta',st.room)}${opt('each','Her kayıttan önce',st.room)}</select></div>
+    <div class="set-row"><label>Kayıttan sonra otomatik temizle<small>Her yeni kayda gürültü azaltma uygulanır. Ham kayıt kaybolmaz: Geri al ile dönülür.</small></label>${sw('sAuto', !!st.autoNr)}</div>
+    <div class="set-row"><label>Otomatik temizlik miktarı<small>Düşük değer sese daha az dokunur.</small></label><select class="field" id="sAutoDb">${[6,8,10,12,15].map(v=>opt(v,v+' dB',st.autoNrDb||10)).join('')}</select></div>
+    <div class="set-sec">Ekran</div>
+    <div class="set-row"><label>Ekran yönü</label><select class="field" id="sOr">${opt('auto','Otomatik',st.orient)}${opt('portrait','Dikey',st.orient)}${opt('landscape','Yatay',st.orient)}</select></div>
+    <div class="set-row"><label>Ekranı açık tut<small>Uygulama açıkken ekran kararmaz.</small></label>${sw('sKeep', st.keepScreen!==false)}</div>
+    <div class="btns"><button class="btn" id="sReset">Ayarları varsayılana döndür</button></div>
+    <div class="set-sec">Hakkında</div>
+    <div class="hint" style="margin-top:6px">Auxera ${esc(AX.version())} · Tüm işlemler cihazda yapılır, ses dosyalarınız internete gönderilmez.<br>Ses kartı ipucu: kendinizi duymak için ses kartının “direct monitor” özelliğini kullanın; telefon üzerinden dinleme gecikmeli olur.<br>MP3 kodlayıcı: LAME tabanlı Java uygulaması (LGPL).</div>`);
+  const save = o=>{ AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o); };
+  $('sSr').onchange = e=>save({sr:+e.target.value});
+  $('sSrc').onchange = e=>save({src:e.target.value});
+  $('sRes').onchange = e=>save({res:e.target.value});
+  $('sCh').onchange = e=>save({ch:e.target.value});
+  $('sDev').onchange = e=>save({dev:+e.target.value});
+  $('sCd').onchange = e=>save({countdown:+e.target.value});
+  $('sPre').onchange = e=>save({preroll:+e.target.value});
+  $('sOr').onchange = e=>save({orient:e.target.value});
+  $('sRoom').onchange = e=>save({room:e.target.value});
+  $('sPrep').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({prep:on}); };
+  $('sBand').onchange = e=>{ save({band:e.target.value}); if(S.screen==='editor') draw(); };
+  $('sAutoDb').onchange = e=>save({autoNrDb:+e.target.value});
+  $('sAuto').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({autoNr:on}); if(on && (S.settings.room||'off')==='off' && !(S.st && S.st.noise)) toast('Otomatik temizlik için gürültü örneği gerekir. “Kayıttan önce ortam sesi”ni açın ya da Temizle › Gürültü ile örnek alın.', 4800); };
+  $('sReset').onclick = ()=>confirmDialog('Ayarlar sıfırlansın mı?', 'Kayıt, gürültü ve ekran ayarları ilk hâline döner. Kayıtlarınız etkilenmez.', 'Sıfırla', ()=>{ S.settings = J(AX.resetSettings()) || {}; closeSheet(); setTimeout(openSettings, 250); toast('Ayarlar varsayılana döndü'); });
+  $('sLow').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({lowCut:on}); };
+  $('sKeep').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({keepScreen:on}); };
+}
+
+// =====================================================================================
+// native events
+// =====================================================================================
+window.AXev = function(type, d){
+  try{
+    if(type==='job') onJob(d);
+    else if(type==='play'){ if(d.end){ S.playing=false; S.ppos=-1; setPlayIcon(); abUpd(false); draw(); } }
+    else if(type==='rec') recFinished(d);
+    else if(type==='spec') onSpec(d);
+    else if(type==='perm'){ const cb=S.permCb; S.permCb=null; if(cb) cb(!!d.mic); }
+    else if(type==='saved'){ toast(d.ok? 'Kaydedildi: '+d.name : ('Kaydedilemedi: '+(d.error||'')), 3000); }
+    else if(type==='busy'){ showBusy(); }
+    else if(type==='key'){ if(d.k==='mark' || !PR.active) recMark(); else prKey(d.k); }
+    else if(type==='script'){ if(d.ok && $('scTxt')){ $('scTxt').value = d.text; toast('Metin dosyadan alındı · Kaydet ile saklayın'); } else if(!d.ok) toast(d.error||'Metin okunamadı'); }
+  }catch(e){ console.error(e); }
 };
-$('bReport').onclick = async ()=>{
-  const lines = [...$('diag').querySelectorAll('dt')].map(dt=>dt.textContent+': '+dt.nextElementSibling.textContent);
-  const t = 'Auxera Web deneme raporu\n'+lines.join('\n')+'\nAlım sayısı: '+takes.length+(takes[0]?'\nSon alım: '+fmt(takes[0].n/takes[0].sr)+', '+takes[0].marks.length+' işaret, tepe '+dbTxt(takes[0].peakMax)+' dB':'')+'\n'+UA;
-  try{ await navigator.clipboard.writeText(t); toast('Rapor kopyalandı; bana yapıştırabilirsiniz.'); }
-  catch(e){ prompt('Raporu kopyalayın:', t); }
+window.AXback = function(){
+  if(closeDialog()) return true;
+  if(closeMenu()) return true;
+  if(!$('recov').classList.contains('hide')) return true;
+  if(closeSheet()) return true;
+  if(S.playing){ stopPlay(); return true; }
+  if(S.screen==='editor'){ if(S.breath){ S.breath=null; draw(); return true; } goHome(); return true; }
+  return false;
 };
 
-(async ()=>{
-  if(!window.isSecureContext || !navigator.mediaDevices){ const b=$('recovBanner'); b.hidden=false; b.textContent='Bu sayfa güvenli bağlantı (https) olmadan mikrofona erişemez.'; }
-  try{ await recover(); await renderTakes(); }catch(e){ toast('Depolama açılamadı: '+(e&&e.message||e), 5000); }
-  renderDiag();
-  addEventListener('resize', ()=>{ if(cur) drawTake(); });
+// ---- first-run intro ----
+const INTRO = [
+  {t:'Kayıt', i:'mic', b:'Kayda basınca önce seviye ekranı açılır: tepeler sarı bandın içinde kalacak şekilde gain’i ayarlayıp kırmızı düğmeyle başlayın. Okurken hata yaparsanız <b>kırmızı bayrağa</b> ya da kulaklık/pedal tuşuna basın.'},
+  {t:'Düzenleme', i:'cut', b:'Dalgada tek parmakla sürükleyerek seçin, iki parmakla yakınlaştırın. Kaydırmak için zaman cetvelini sürükleyin ya da sağ üstteki <b>el</b> düğmesini açın. Seçim süresine dokunursanız milisaniye ayarı açılır; geri al düğmesine basılı tutunca geçmiş açılır.'},
+  {t:'Temizlik ve teslim', i:'noise', b:'Temizle sekmesi gürültü, nefes, ağız sesi ve uğultuyu temizler; her araçta önce <b>Dinle</b> ile orijinalle karşılaştırın. Araca basılı tutarsanız ne yaptığı yazar. Dışa aktarmada sesli kitap, stüdyo ve paylaşım hazır ayarları var.'}
+];
+function showIntro(force){
+  if(!force && S.settings.introDone) return;
+  let k = 0;
+  const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Kısa tanıtım');
+  const render = ()=>{
+    const it = INTRO[k];
+    el.innerHTML = `<div class="card2"><div class="ih">${ic(it.i)}${it.t}</div><p>${it.b}</p>
+      <div class="dots">${INTRO.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>
+      <div class="btns" style="margin-top:0"><button class="btn" id="inSkip">${k===INTRO.length-1?'Kapat':'Geç'}</button><button class="btn pri" id="inNext">${k===INTRO.length-1?'Başla':'İleri'}</button></div></div>`;
+    $('inSkip').onclick = done; $('inNext').onclick = ()=>{ if(k < INTRO.length-1){ k++; render(); } else done(); };
+  };
+  const done = ()=>{ el.remove(); S.settings.introDone = true; AX.setSettings(JSON.stringify({introDone:true})); };
+  document.body.appendChild(el); render();
+}
+
+// =====================================================================================
+// boot
+// =====================================================================================
+loadSettings();
+renderTools();
+(function boot(){
+  const st = J(AX.state());
+  const rs = J(AX.recState());
+  if(st && st.open){
+    enterEditor(st);
+    if(rs && rs.on){ rec = {mode:'insert', a:0, pre:0, blocks:[], from:0, m:newMeter(), paused:!!rs.paused}; $('recov').classList.remove('hide'); sizeRecCanvas(); recPoll(); }
+  } else { renderHome(); showScreen('home'); }
+  setTimeout(()=>showIntro(false), 300);
 })();
 </script>
+<script>AX.ready.then(()=>{const m=document.getElementById('appMain');const x=document.createElement('script');x.textContent=m.textContent;m.remove();document.body.appendChild(x);});</script>
+<script>history.pushState({ax:1},"");addEventListener("popstate",()=>{try{window.AXback&&window.AXback()}catch(e){}history.pushState({ax:1},"");});</script>
 </body>
 </html>

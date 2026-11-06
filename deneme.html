@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Auxera">
+<meta name="theme-color" content="#0b0c10">
+<title>Auxera Web · Deneme</title>
+<style>
+:root{--bg:#0b0c10;--panel:#121419;--raise:#1a1d24;--raise2:#232731;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
+--text:#e9ebf1;--muted:#a3a9b7;--dim:#8c93a3;--wave:#2fe0c0;--rec:#ff4d5c;--amber:#ffc44d;--ok:#2fe0c0;--bad:#ff6b78;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;gap:12px;padding:4px 2px}
+header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:.2px}
+header small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px}
+.card h2{margin:0 0 10px;font-size:12px;letter-spacing:1.3px;font-weight:600;color:var(--dim);text-transform:uppercase}
+.row{display:flex;align-items:center;gap:10px}
+.btn{height:46px;padding:0 18px;border-radius:23px;border:1px solid var(--line2);background:var(--raise);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500}
+.btn:active{background:var(--raise2)}
+.btn.pri{background:var(--rec);border-color:var(--rec);color:#fff;font-weight:600}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.timer{font-variant-numeric:tabular-nums;font-size:46px;font-weight:300;letter-spacing:1px;line-height:1.1}
+.meter{position:relative;height:12px;border-radius:6px;background:#1a1d24;overflow:hidden}
+.meter b{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#1a8f7c 0%,var(--wave) 75%,var(--amber) 88%,var(--rec) 100%);background-size:var(--mw,300px) 100%;border-radius:6px}
+.meter i{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.8;left:0}
+.meter .tgt{position:absolute;top:0;bottom:0;background:rgba(255,196,77,.16);border-left:1px dashed rgba(255,196,77,.6);border-right:1px dashed rgba(255,196,77,.6)}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px;font-variant-numeric:tabular-nums}
+.stats{display:flex;gap:16px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.stats b{color:var(--text);font-weight:600}
+canvas{display:block;width:100%}
+#live{height:90px;border-radius:12px;background:#0d0f13}
+.ctl{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:6px}
+.round{width:60px;height:60px;border-radius:30px;border:1.5px solid var(--line2);background:none;display:grid;place-items:center}
+.round.mark{border-color:rgba(255,92,106,.6);color:#ff5c6a;position:relative}
+.round.mark span[hidden]{display:none}
+.round.mark span{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--rec);color:#fff;font-size:11.5px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.recbtn{width:78px;height:78px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:none;display:grid;place-items:center}
+.recbtn i{display:block;width:56px;height:56px;border-radius:50%;background:var(--rec);transition:all .15s}
+.recbtn.on i{width:26px;height:26px;border-radius:6px}
+.hint{font-size:12.5px;color:var(--dim);text-align:center;margin:8px 0 0}
+.diag{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
+.diag dt{color:var(--muted)}.diag dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.good{color:var(--ok)}.warn{color:var(--amber)}.badc{color:var(--bad)}
+.take{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
+.take:first-of-type{border-top:0}
+.take .t{flex:1;min-width:0}.take .t b{display:block;font-weight:600}.take .t small{color:var(--muted)}
+.ibtn{width:44px;height:44px;border-radius:22px;border:1px solid var(--line2);background:var(--raise);display:grid;place-items:center;flex:none}
+#tw{height:110px;border-radius:12px;background:#0d0f13;margin:10px 0 8px;touch-action:none}
+.empty{color:var(--dim);font-size:13.5px;text-align:center;padding:8px 0}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e9ebf1;color:#0b0c10;padding:10px 16px;border-radius:14px;font-size:14px;max-width:88vw;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+.banner{border-radius:16px;padding:12px 14px;font-size:13.5px;background:rgba(255,196,77,.1);border:1px solid rgba(255,196,77,.35);color:#ffe3a3}
+.flash{animation:fl .35s}
+@keyframes fl{from{background:rgba(255,77,92,.35)}to{background:var(--panel)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="0" y1="-10" x2="0" y2="210"><stop offset="0" stop-color="#b39dff"/><stop offset="1" stop-color="#6f3cff"/></linearGradient></defs>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></symbol>
+<symbol id="i-del" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+</svg>
+<div class="wrap">
+<header>
+<svg viewBox="30 -12 140 224" width="24" height="38" role="img" aria-label="Auxera"><path d="M40 120 A20 20 0 0 0 60 100 V18.2 A20 20 0 0 1 100 18.2 V95.7 M100 104.3 V181.8 A20 20 0 0 0 140 181.8 V100 A20 20 0 0 1 160 80" fill="none" stroke="url(#lg)" stroke-width="15.2"/></svg>
+<h1>Auxera <small>Web deneme sürümü · kayıt çekirdeği</small></h1>
+</header>
+
+<div class="banner" id="recovBanner" hidden></div>
+
+<section class="card" id="recCard" aria-label="Kayıt">
+<h2>Kayıt</h2>
+<div class="row" style="justify-content:space-between;align-items:flex-end">
+<div class="timer" id="timer">00:00,0</div>
+<div class="stats" style="flex-direction:column;gap:2px;text-align:right"><span>tepe <b id="pk">−∞</b> dB</span><span>en yüksek <b id="pkMax">−∞</b> dB</span></div>
+</div>
+<div style="margin-top:12px">
+<div class="meter" id="meter"><div class="tgt" id="tgt"></div><b id="mb"></b><i id="mh"></i></div>
+<div class="scale"><span>−60</span><span>−40</span><span>−20</span><span>−9 / −6</span><span>0 dB</span></div>
+</div>
+<canvas id="live" style="margin-top:12px"></canvas>
+<div class="ctl">
+<button class="round" id="bMon" aria-label="Mikrofonu aç / seviye kontrolü"><svg class="ic"><use href="#i-play"/></svg></button>
+<button class="recbtn" id="bRec" aria-label="Kayda başla"><i></i></button>
+<button class="round mark" id="bMark" aria-label="Hata işareti koy" disabled><svg class="ic"><use href="#i-flag"/></svg><span id="markN" hidden>0</span></button>
+</div>
+<p class="hint" id="recHint">Kayıt sırasında hata işareti: bayrağa dokunun ya da Bluetooth pedal / klavye (boşluk, →, Page Down, Enter).</p>
+</section>
+
+<section class="card" aria-label="Alımlar">
+<h2>Alımlar</h2>
+<div id="takes"><div class="empty">Henüz kayıt yok.</div></div>
+<div id="player" hidden>
+<canvas id="tw"></canvas>
+<div class="stats" style="margin-bottom:8px"><span id="pInfo"></span></div>
+<div class="row" style="justify-content:space-between">
+<div class="stats"><b id="pTime" style="font-size:17px">00:00,0</b></div>
+<div class="row">
+<button class="ibtn" id="pPlay" aria-label="Çal"><svg class="ic"><use href="#i-play"/></svg></button>
+<button class="ibtn" id="pWav" aria-label="WAV olarak dışa aktar"><svg class="ic"><use href="#i-dl"/></svg></button>
+</div>
+</div>
+</div>
+</section>
+
+<section class="card" aria-label="Tanılama">
+<h2>Bu cihazda durum</h2>
+<dl class="diag" id="diag"></dl>
+<div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">
+<button class="btn" id="bPersist">Kayıtları kalıcı yap</button>
+<button class="btn" id="bReport"><svg class="ic"><use href="#i-copy"/></svg>Raporu kopyala</button>
+</div>
+<p class="hint" style="text-align:left" id="persistHint"></p>
+</section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const DB_NAME = 'auxera-web', CHUNK_SEC = 1;
+const UA = navigator.userAgent;
+const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+
+function toast(t, ms){ const e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('on'), ms||2400); }
+function fmt(s){ s=Math.max(0,s); const m=Math.floor(s/60), r=s-m*60; return String(m).padStart(2,'0')+':'+r.toFixed(1).padStart(4,'0').replace('.',','); }
+function dbTxt(v){ return v<=-90 ? '−∞' : (v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',','); }
+const lin2db = a => a>0 ? 20*Math.log10(a) : -120;
+
+// ---------------- IndexedDB ----------------
+let dbp = null;
+function idb(){
+  if(dbp) return dbp;
+  dbp = new Promise((res, rej)=>{
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = ()=>{ const d=r.result; d.createObjectStore('takes',{keyPath:'id'}); d.createObjectStore('chunks'); };
+    r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error);
+  });
+  return dbp;
+}
+async function tx(stores, mode, fn){
+  const d = await idb();
+  return new Promise((res, rej)=>{
+    const t = d.transaction(stores, mode); let out;
+    Promise.resolve(fn(t)).then(v=>out=v);
+    t.oncomplete = ()=>res(out); t.onerror = ()=>rej(t.error); t.onabort = ()=>rej(t.error);
+  });
+}
+const req = r => new Promise((res, rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const putTake = take => tx(['takes'],'readwrite', t=>{ t.objectStore('takes').put(take); });
+const putChunk = (id, i, f32) => tx(['chunks'],'readwrite', t=>{ t.objectStore('chunks').put(f32.buffer, id+'/'+String(i).padStart(6,'0')); });
+const allTakes = () => tx(['takes'],'readonly', t=>req(t.objectStore('takes').getAll()));
+async function loadSamples(take){
+  const keys = IDBKeyRange.bound(take.id+'/', take.id+'/~');
+  const bufs = await tx(['chunks'],'readonly', t=>req(t.objectStore('chunks').getAll(keys)));
+  let n=0; for(const b of bufs) n+=b.byteLength/4;
+  const out = new Float32Array(n); let o=0;
+  for(const b of bufs){ const f=new Float32Array(b); out.set(f,o); o+=f.length; }
+  return out;
+}
+async function deleteTake(id){
+  await tx(['takes','chunks'],'readwrite', t=>{ t.objectStore('takes').delete(id); t.objectStore('chunks').delete(IDBKeyRange.bound(id+'/', id+'/~')); });
+}
+
+// ---------------- audio input ----------------
+const A = { ctx:null, stream:null, src:null, node:null, track:null, settings:null, monitoring:false,
+  rec:null,                      // {id, start, n, buf:[], bufN, idx, marks:[], peakMax}
+  peakHold:-120, peakHoldT:0, livePk:[], lastPk:-120 };
+
+const WORKLET = `class Cap extends AudioWorkletProcessor{process(i){const c=i[0];if(c&&c.length){const a=c[0];let o;if(c.length>1){o=new Float32Array(a.length);for(let k=0;k<c.length;k++){const x=c[k];for(let j=0;j<a.length;j++)o[j]+=x[j]/c.length;}}else o=a.slice(0);this.port.postMessage(o,[o.buffer]);}return true;}}registerProcessor('cap',Cap);`;
+
+async function openInput(){
+  if(A.ctx && A.stream) return true;
+  try{
+    A.stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:1}}, video:false});
+  }catch(e){
+    toast(e && e.name==='NotAllowedError' ? 'Mikrofon izni verilmedi.' : 'Mikrofon açılamadı: '+(e && e.message || e), 4000);
+    return false;
+  }
+  A.track = A.stream.getAudioTracks()[0];
+  A.settings = A.track.getSettings ? A.track.getSettings() : {};
+  const AC = window.AudioContext || window.webkitAudioContext;
+  A.ctx = new AC({latencyHint:'interactive'});
+  if(A.ctx.state === 'suspended') await A.ctx.resume();
+  A.src = A.ctx.createMediaStreamSource(A.stream);
+  if(A.ctx.audioWorklet){
+    const url = URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));
+    await A.ctx.audioWorklet.addModule(url);
+    A.node = new AudioWorkletNode(A.ctx, 'cap', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1]});
+    A.node.port.onmessage = e => onAudio(e.data);
+  } else {
+    A.node = A.ctx.createScriptProcessor(2048, 1, 1);
+    A.node.onaudioprocess = e => onAudio(new Float32Array(e.inputBuffer.getChannelData(0)));
+  }
+  const mute = A.ctx.createGain(); mute.gain.value = 0;
+  A.src.connect(A.node); A.node.connect(mute); mute.connect(A.ctx.destination);
+  A.track.onended = ()=>{ if(A.rec) stopRec('Mikrofon bağlantısı kesildi; kayıt kaydedildi.'); closeInput(); };
+  renderDiag();
+  return true;
+}
+function closeInput(){
+  try{ A.stream && A.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ A.ctx && A.ctx.close(); }catch(e){}
+  A.ctx=A.stream=A.src=A.node=A.track=null; A.monitoring=false; setMonBtn();
+}
+
+function onAudio(f){
+  let pk=0; for(let i=0;i<f.length;i++){ const v=f[i]<0?-f[i]:f[i]; if(v>pk) pk=v; }
+  const d = lin2db(pk);
+  A.lastPk = Math.max(A.lastPk, d);
+  const r = A.rec;
+  if(r){
+    r.buf.push(f); r.bufN += f.length; r.n += f.length;
+    if(d > r.peakMax) r.peakMax = d;
+    const per = Math.round(A.ctx.sampleRate*CHUNK_SEC);
+    if(r.bufN >= per) flushRec(false);
+  }
+}
+function flushRec(final){
+  const r = A.rec; if(!r || !r.bufN) return Promise.resolve();
+  const out = new Float32Array(r.bufN); let o=0; for(const b of r.buf){ out.set(b,o); o+=b.length; }
+  r.buf=[]; r.bufN=0;
+  const i = r.idx++;
+  const meta = {id:r.id, created:r.created, sr:r.sr, n:r.n, marks:r.marks.slice(), peakMax:r.peakMax, done:!!final, name:r.name};
+  r.pending = (r.pending||Promise.resolve()).then(()=>putChunk(r.id, i, out)).then(()=>putTake(meta)).catch(e=>{ toast('Kaydedilemedi: '+(e&&e.message||e), 5000); });
+  return r.pending;
+}
+
+// ---------------- UI loop ----------------
+const live = $('live'); const lc = live.getContext('2d');
+function sizeCanvas(cv){ const r=cv.getBoundingClientRect(), d=window.devicePixelRatio||1; const w=Math.round(r.width*d), h=Math.round(r.height*d); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } return d; }
+function tick(){
+  requestAnimationFrame(tick);
+  if(!A.ctx) return;
+  const now = performance.now(), pk = A.lastPk; A.lastPk = -120;
+  if(pk > A.peakHold || now - A.peakHoldT > 1500){ A.peakHold = pk; A.peakHoldT = now; }
+  const pos = v => Math.max(0, Math.min(1, (v+60)/60));
+  const mw = $('meter').clientWidth; $('meter').style.setProperty('--mw', mw+'px');
+  $('mb').style.width = (pos(pk)*100)+'%'; $('mh').style.left = 'calc('+(pos(A.peakHold)*100)+'% - 1px)';
+  $('pk').textContent = dbTxt(A.peakHold);
+  A.livePk.push(pk); if(A.livePk.length > 600) A.livePk.splice(0, A.livePk.length-600);
+  const d = sizeCanvas(live), w=live.width, h=live.height, mid=h/2;
+  lc.clearRect(0,0,w,h);
+  const step = 3*d, n = Math.floor(w/step), arr = A.livePk.slice(-n);
+  lc.fillStyle = A.rec ? '#ff6b78' : '#2fe0c0';
+  for(let i=0;i<arr.length;i++){ const a = Math.pow(10, Math.max(-60,arr[i])/20), v=Math.max(1*d, a*(mid-3*d)); lc.fillRect(w-(arr.length-i)*step, mid-v, Math.max(1,step-1*d), v*2); }
+  if(A.rec){
+    const r=A.rec; const s = r.n / r.sr; $('timer').textContent = fmt(s);
+    $('pkMax').textContent = dbTxt(r.peakMax);
+  }
+}
+requestAnimationFrame(tick);
+(function(){ const t=$('tgt'); const p=v=>(v+60)/60*100; t.style.left=p(-9)+'%'; t.style.width=(p(-6)-p(-9))+'%'; })();
+
+// ---------------- record / mark ----------------
+let wakeLock = null;
+async function startRec(){
+  if(!await openInput()) return;
+  if(A.ctx.state==='suspended') await A.ctx.resume();
+  const now = new Date();
+  const name = 'Kayıt '+now.toLocaleDateString('tr-TR')+' '+now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  A.rec = {id:'t'+now.getTime(), created:now.getTime(), name, sr:A.ctx.sampleRate, n:0, buf:[], bufN:0, idx:0, marks:[], peakMax:-120};
+  await putTake({id:A.rec.id, created:A.rec.created, sr:A.rec.sr, n:0, marks:[], peakMax:-120, done:false, name});
+  A.livePk = [];
+  $('bRec').classList.add('on'); $('bRec').setAttribute('aria-label','Kaydı durdur');
+  $('bMark').disabled = false; $('markN').hidden = true; $('markN').textContent='0';
+  $('timer').textContent = fmt(0); $('pkMax').textContent='−∞';
+  try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){ wakeLock=null; }
+}
+async function stopRec(msg){
+  const r = A.rec; if(!r) return;
+  await flushRec(true); await r.pending;
+  A.rec = null;
+  $('bRec').classList.remove('on'); $('bRec').setAttribute('aria-label','Kayda başla');
+  $('bMark').disabled = true;
+  try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock=null;
+  if(!A.monitoring) closeInput();
+  toast(msg || ('Kaydedildi · '+fmt(r.n/r.sr)+(r.marks.length? ' · '+r.marks.length+' işaret':'')));
+  await renderTakes(); openTake(r.id);
+}
+function mark(){
+  const r = A.rec; if(!r) return;
+  r.marks.push(r.n);
+  $('markN').hidden=false; $('markN').textContent = r.marks.length;
+  const c=$('recCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
+  if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
+}
+function setMonBtn(){ $('bMon').innerHTML = '<svg class="ic"><use href="#i-'+(A.monitoring?'pause':'play')+'"/></svg>'; $('bMon').setAttribute('aria-label', A.monitoring?'Mikrofonu kapat':'Mikrofonu aç / seviye kontrolü'); }
+$('bMon').onclick = async ()=>{
+  if(A.rec) return;
+  if(A.monitoring){ A.monitoring=false; closeInput(); }
+  else if(await openInput()){ A.monitoring = true; setMonBtn(); toast('Mikrofon açık: seviyeyi −9…−6 dB tepeye ayarlayın.'); }
+};
+$('bRec').onclick = ()=>{ A.rec ? stopRec() : startRec(); };
+$('bMark').onclick = mark;
+document.addEventListener('keydown', e=>{
+  if(!A.rec) return;
+  if([' ','ArrowRight','ArrowDown','PageDown','Enter','m','M'].includes(e.key)){ e.preventDefault(); mark(); }
+});
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && A.rec) stopRec('Uygulamadan çıkıldığı için kayıt durdu ve kaydedildi.'); });
+window.addEventListener('pagehide', ()=>{ if(A.rec) flushRec(true); });
+
+// ---------------- takes / player ----------------
+let takes = [], cur = null;
+const P = { samples:null, src:null, ctx:null, t0:0, off:0, playing:false };
+async function renderTakes(){
+  takes = (await allTakes()).sort((a,b)=>b.created-a.created);
+  const el = $('takes');
+  if(!takes.length){ el.innerHTML='<div class="empty">Henüz kayıt yok.</div>'; return; }
+  el.innerHTML = '';
+  for(const t of takes){
+    const d = document.createElement('div'); d.className='take';
+    const info = fmt(t.n/t.sr)+' · '+(t.sr/1000).toLocaleString('tr-TR')+' kHz'+(t.marks.length? ' · '+t.marks.length+' işaret':'')+(t.recovered?' · kurtarıldı':'');
+    d.innerHTML = '<div class="t"><b></b><small></small></div>';
+    d.querySelector('b').textContent = t.name; d.querySelector('small').textContent = info;
+    const op = document.createElement('button'); op.className='ibtn'; op.setAttribute('aria-label', t.name+' aç'); op.innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; op.onclick=()=>openTake(t.id);
+    const del = document.createElement('button'); del.className='ibtn'; del.setAttribute('aria-label', t.name+' sil'); del.innerHTML='<svg class="ic"><use href="#i-del"/></svg>';
+    del.onclick=async()=>{ if(del.dataset.arm){ stopPlay(); await deleteTake(t.id); if(cur&&cur.id===t.id){ cur=null; $('player').hidden=true; } renderTakes(); } else { del.dataset.arm='1'; del.style.borderColor='var(--rec)'; toast('Silmek için bir daha dokunun'); setTimeout(()=>{ delete del.dataset.arm; del.style.borderColor=''; },2500); } };
+    d.append(op, del); el.append(d);
+  }
+}
+async function openTake(id){
+  stopPlay();
+  cur = takes.find(t=>t.id===id); if(!cur) return;
+  P.samples = await loadSamples(cur); P.off = 0;
+  $('player').hidden = false;
+  $('pInfo').textContent = cur.name+' · '+fmt(P.samples.length/cur.sr);
+  drawTake();
+}
+function drawTake(){
+  const cv=$('tw'), c=cv.getContext('2d'), d=sizeCanvas(cv), w=cv.width, h=cv.height, mid=h/2, s=P.samples;
+  c.clearRect(0,0,w,h); if(!s || !s.length) return;
+  const spp = s.length/w;
+  c.fillStyle = '#2fe0c0';
+  for(let x=0;x<w;x++){ let mn=0,mx=0; const a=Math.floor(x*spp), b=Math.min(s.length, Math.floor((x+1)*spp)); for(let i=a;i<b;i++){ const v=s[i]; if(v<mn)mn=v; if(v>mx)mx=v; } c.fillRect(x, mid-mx*(mid-2), 1, Math.max(1,(mx-mn)*(mid-2))); }
+  c.fillStyle = '#ff5c6a';
+  for(const m of cur.marks){ const x=Math.round(m/spp); c.fillRect(x-1*d,0,2*d,h); c.beginPath(); c.moveTo(x,0); c.lineTo(x+9*d,0); c.lineTo(x,9*d); c.fill(); }
+  const pos = curPos(); c.fillStyle='#ffffff'; c.fillRect(Math.round(pos*cur.sr/spp), 0, 1.5*d, h);
+  $('pTime').textContent = fmt(pos);
+}
+function curPos(){ return P.playing ? Math.min(P.samples.length/cur.sr, P.off + (P.ctx.currentTime - P.t0)) : P.off; }
+function stopPlay(){ if(P.playing){ P.off = curPos(); try{ P.src.stop(); }catch(e){} P.playing=false; } $('pPlay').innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; }
+$('pPlay').onclick = async ()=>{
+  if(!cur) return;
+  if(P.playing){ stopPlay(); drawTake(); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!P.ctx) P.ctx = new AC();
+  if(P.ctx.state==='suspended') await P.ctx.resume();
+  if(P.off >= P.samples.length/cur.sr - 0.05) P.off = 0;
+  const buf = P.ctx.createBuffer(1, P.samples.length, cur.sr); buf.copyToChannel ? buf.copyToChannel(P.samples,0) : buf.getChannelData(0).set(P.samples);
+  P.src = P.ctx.createBufferSource(); P.src.buffer = buf; P.src.connect(P.ctx.destination);
+  P.src.onended = ()=>{ if(P.playing && curPos() >= P.samples.length/cur.sr - 0.05){ P.playing=false; P.off=0; $('pPlay').innerHTML='<svg class="ic"><use href="#i-play"/></svg>'; drawTake(); } };
+  P.src.start(0, P.off); P.t0 = P.ctx.currentTime; P.playing = true;
+  $('pPlay').innerHTML='<svg class="ic"><use href="#i-pause"/></svg>';
+  (function loop(){ if(!P.playing) return; drawTake(); requestAnimationFrame(loop); })();
+};
+$('tw').addEventListener('pointerdown', e=>{ if(!cur) return; const r=e.currentTarget.getBoundingClientRect(); const was=P.playing; stopPlay(); P.off = Math.max(0,(e.clientX-r.left)/r.width)*P.samples.length/cur.sr; drawTake(); if(was) $('pPlay').onclick(); });
+
+function wav24(samples, sr){
+  const n = samples.length, data = n*3, b = new ArrayBuffer(44+data), v = new DataView(b);
+  const s = (o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
+  s(0,'RIFF'); v.setUint32(4,36+data,true); s(8,'WAVE'); s(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*3,true); v.setUint16(32,3,true); v.setUint16(34,24,true); s(36,'data'); v.setUint32(40,data,true);
+  let o=44; for(let i=0;i<n;i++){ let x=Math.max(-1,Math.min(1,samples[i])); let q=Math.round(x<0? x*8388608 : x*8388607); v.setUint8(o,q&255); v.setUint8(o+1,(q>>8)&255); v.setUint8(o+2,(q>>16)&255); o+=3; }
+  return new Blob([b],{type:'audio/wav'});
+}
+$('pWav').onclick = async ()=>{
+  if(!cur || !P.samples) return;
+  const name = cur.name.replace(/[^\wçğıöşüÇĞİÖŞÜ .-]+/g,'-').replace(/\s+/g,'_')+'.wav';
+  const blob = wav24(P.samples, cur.sr);
+  const file = (typeof File==='function') ? new File([blob], name, {type:'audio/wav'}) : null;
+  if(file && navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:name}); return; }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+};
+
+// ---------------- recovery ----------------
+async function recover(){
+  const ts = await allTakes(); const open = ts.filter(t=>!t.done);
+  for(const t of open){ t.done = true; t.recovered = true; await putTake(t); }
+  if(open.length){ const b=$('recovBanner'); b.hidden=false; b.textContent = open.length+' yarım kalan kayıt kurtarıldı (son saniyeye kadar). Alımlar listesinde “kurtarıldı” olarak görünüyor.'; }
+}
+
+// ---------------- diagnostics ----------------
+async function renderDiag(){
+  const s = A.settings || {};
+  const yes = (v, good)=> v===undefined ? '<span class="warn">bilinmiyor</span>' : (v===good ? '<span class="good">'+(v?'açık':'kapalı')+'</span>' : '<span class="badc">'+(v?'açık':'kapalı')+'</span>');
+  let persisted = false, est = null;
+  try{ persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false; }catch(e){}
+  try{ est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null; }catch(e){}
+  const rows = [
+    ['Tarayıcı', IS_IOS ? 'iOS / iPadOS Safari' : (/Android/.test(UA)?'Android':'Masaüstü')],
+    ['Ana ekrandan açıldı', STANDALONE ? '<span class="good">evet</span>' : '<span class="warn">hayır</span>'],
+    ['Kayıt kalıcı mı', persisted ? '<span class="good">evet</span>' : '<span class="warn">hayır (Safari silebilir)</span>'],
+    ['Boş alan', est && est.quota ? ((est.quota-est.usage)/1e9).toFixed(1).replace('.',',')+' GB' : '—'],
+    ['Mikrofon', A.track ? (A.track.label || 'bilinmiyor') : '<span class="warn">henüz açılmadı</span>'],
+    ['Örnekleme', A.ctx ? (A.ctx.sampleRate/1000).toLocaleString('tr-TR')+' kHz' : '—'],
+    ['Yankı giderme', A.track ? yes(s.echoCancellation,false) : '—'],
+    ['Gürültü bastırma', A.track ? yes(s.noiseSuppression,false) : '—'],
+    ['Otomatik kazanç', A.track ? yes(s.autoGainControl,false) : '—'],
+    ['Kayıt motoru', A.ctx ? (A.ctx.audioWorklet ? 'AudioWorklet' : 'ScriptProcessor (eski)') : '—'],
+    ['Ekranı açık tutma', 'wakeLock' in navigator ? '<span class="good">destekleniyor</span>' : '<span class="warn">yok</span>'],
+  ];
+  $('diag').innerHTML = rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
+  $('persistHint').textContent = persisted ? '' : (IS_IOS && !STANDALONE ? 'iPhone/iPad’de kayıtların silinmemesi için: Paylaş → Ana Ekrana Ekle, sonra uygulamayı oradan açın.' : '');
+  $('bPersist').hidden = persisted;
+}
+$('bPersist').onclick = async ()=>{
+  let ok=false; try{ ok = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : false; }catch(e){}
+  toast(ok ? 'Kayıtlar artık kalıcı.' : (IS_IOS && !STANDALONE ? 'Safari izin vermedi. Paylaş → Ana Ekrana Ekle ile açınca kalıcı olur.' : 'Tarayıcı izin vermedi.'), 4000);
+  renderDiag();
+};
+$('bReport').onclick = async ()=>{
+  const lines = [...$('diag').querySelectorAll('dt')].map(dt=>dt.textContent+': '+dt.nextElementSibling.textContent);
+  const t = 'Auxera Web deneme raporu\n'+lines.join('\n')+'\nAlım sayısı: '+takes.length+(takes[0]?'\nSon alım: '+fmt(takes[0].n/takes[0].sr)+', '+takes[0].marks.length+' işaret, tepe '+dbTxt(takes[0].peakMax)+' dB':'')+'\n'+UA;
+  try{ await navigator.clipboard.writeText(t); toast('Rapor kopyalandı; bana yapıştırabilirsiniz.'); }
+  catch(e){ prompt('Raporu kopyalayın:', t); }
+};
+
+(async ()=>{
+  if(!window.isSecureContext || !navigator.mediaDevices){ const b=$('recovBanner'); b.hidden=false; b.textContent='Bu sayfa güvenli bağlantı (https) olmadan mikrofona erişemez.'; }
+  try{ await recover(); await renderTakes(); }catch(e){ toast('Depolama açılamadı: '+(e&&e.message||e), 5000); }
+  renderDiag();
+  addEventListener('resize', ()=>{ if(cur) drawTake(); });
+})();
+</script>
+</body>
+</html>
