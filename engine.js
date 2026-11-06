@@ -225,6 +225,7 @@ class Project {
     this.sources = new Map(); this.nextSrc = meta.nextSrc || 1;
     this.segs = []; this.first = null; this.undo = []; this.redo = [];
     this.script = ''; this.cues = []; this.marks = []; this.recSrc = -1; this.recA = -1; this.recB = -1;
+    this.noise = null; this.noiseA = -1; this.noiseB = -1;
     this._edl = null; this.loaded = false; this.saveT = 0;
   }
   edl(){ if(!this._edl) this._edl = new Edl(this.sources, this.segs, this.sr); return this._edl; }
@@ -336,6 +337,7 @@ class Project {
     return {id:this.id, name:this.name, sr:this.sr, created:this.created, modified:this.modified, nextSrc:this.nextSrc,
       segs:flat(this.segs), first:flat(this.first), undo:saveU.map(u => [u.label, flat(u.segs)]), redo:this.redo.slice(-MAX_SAVED_UNDO).map(u => [u.label, flat(u.segs)]),
       script:this.script, cues:this.cues, marks:this.marks, recSrc:this.recSrc, recA:this.recA, recB:this.recB,
+      noise:this.noise ? Array.from(this.noise) : null, noiseA:this.noiseA, noiseB:this.noiseB, roomDb:this.roomDb,
       sources:[...this.sources.values()].map(s => [s.id, s.len]), len:this.length()};
   }
   saveSoon(){ clearTimeout(this.saveT); this.saveT = setTimeout(() => this.save(), 400); }
@@ -378,6 +380,7 @@ async function loadProject(id){
   if(m.first){ const f = segsFrom(m.first); const all = [p.segs, ...p.undo.map(u => u.segs), ...p.redo.map(u => u.segs)]; p.first = all.find(l => sameSegs(l, f)) || f; }
   p.script = m.script || ''; p.cues = m.cues || []; p.marks = m.marks || [];
   p.recSrc = m.recSrc == null ? -1 : m.recSrc; p.recA = m.recA; p.recB = m.recB;
+  if(m.noise){ p.noise = Float32Array.from(m.noise); p.noiseA = m.noiseA; p.noiseB = m.noiseB; p.roomDb = m.roomDb; }
   const lens = new Map((m.sources || []).map(x => [x[0], x[1]]));
   const keys = await tx(['chunk'], 'readonly', t => rq(t.objectStore('chunk').getAllKeys(crange(id))));
   const vals = await tx(['chunk'], 'readonly', t => rq(t.objectStore('chunk').getAll(crange(id))));
@@ -418,7 +421,7 @@ function ctx(){
   return actx;
 }
 class Player {
-  constructor(edl, sr, a, b, onDone){ this.e = edl; this.sr = sr; this.a = a; this.b = b; this.onDone = onDone; this.nodes = []; this.next = a; this.stopped = false; }
+  constructor(edl, sr, a, b, onDone, base){ this.e = edl; this.sr = sr; this.a = a; this.b = b; this.onDone = onDone; this.nodes = []; this.next = a; this.stopped = false; this.base = base || 0; }
   start(){
     const c = ctx(); this.t0 = c.currentTime + 0.06;
     const pump = () => {
@@ -438,7 +441,8 @@ class Player {
     pump(); this.iv = setInterval(pump, 60);
   }
   lat(){ return actx ? (actx.outputLatency || actx.baseLatency || 0) : 0; }
-  position(){ if(!actx) return this.a; return Math.min(this.b, this.a + Math.max(0, actx.currentTime - this.t0 - this.lat()) * this.sr); }
+  rel(){ if(!actx) return this.a; return Math.min(this.b, this.a + Math.max(0, actx.currentTime - this.t0 - this.lat()) * this.sr); }
+  position(){ return this.rel() + this.base; }
   stop(){ this.stopped = true; clearInterval(this.iv); for(const x of this.nodes){ try { x.s.stop(); } catch(e){} } this.nodes = []; }
 }
 function stopPlay(){ const p = player; player = null; if(p) p.stop(); }
@@ -520,14 +524,28 @@ function onMic(f){
   let pk = 0, s = 0; for(let i = 0; i < n; i++){ const v = Math.abs(f[i]); if(v > pk) pk = v; s += f[i]*f[i]; }
   r.level = pk; r.rms = Math.sqrt(s / Math.max(1, n));
   if(pk >= 0.999 && !r.testing) r.clipped = true;
-  if(r.testing || r.paused) return;
+  if(r.testing) return;
   let off = 0;
-  if(r.discard > 0){ const d = Math.min(r.discard, n); r.discard -= d; off = d; if(off >= n) return; }
+  if(r.roomLen > 0 && !r.roomDone){
+    if(!r.roomBuf) r.roomBuf = new Float32Array(r.roomLen);
+    const c = Math.min(n, r.roomLen - r.roomFill); r.roomBuf.set(f.subarray(0, c), r.roomFill); r.roomFill += c; off = c;
+    if(r.roomFill >= r.roomLen) finishRoom(r, p.sr);
+    if(off >= n) return;
+  }
+  if(r.paused) return;
+  if(r.discard > 0){ const d = Math.min(r.discard, n - off); r.discard -= d; off += d; if(off >= n) return; }
   r.src.append(f, off, n - off);
   const now = performance.now();
   if(now - r.lastFlush > 1000){ r.lastFlush = now; p.save(); }
 }
 
+function finishRoom(r, sr){
+  const b = r.roomBuf, a0 = Math.min(r.roomSkip, b.length >> 1); let ss = 0;
+  for(let i = a0; i < b.length; i++) ss += b[i] * b[i];
+  r.roomDb = 10 * Math.log10(ss / Math.max(1, b.length - a0) + 1e-24);
+  try { r.roomProfile = D.noiseProfile({read:(pos, o, off, n) => { for(let i = 0; i < n; i++){ const x = pos + i; o[off + i] = x >= 0 && x < b.length ? b[x] : 0; } }}, a0, b.length, sr); } catch(e){}
+  r.roomDone = true; r.roomBuf = null;
+}
 function recStartImpl(mode, aD, bD, test){
   const p = cur;
   if(!p) return err('Proje açık değil');
@@ -544,7 +562,10 @@ function recStartImpl(mode, aD, bD, test){
   p.recSrc = s.id; p.recA = a; p.recB = punch ? (b < 0 ? len : b) : a;
   const r = rec = {src:s, punch, insA:a, insB:p.recB, pre, discard:pre, testing:!!test, started:false, paused:false, clipped:false,
     level:0, rms:0, gainLin:undb(+settings.inGain || 0), curGain:undb(+settings.inGain || 0), lowCut: settings.lowCut !== false,
-    hp1:biquadHP(80, p.sr), hp2:biquadHP(80, p.sr), lastFlush:performance.now(), error:null, done:false};
+    hp1:biquadHP(80, p.sr), hp2:biquadHP(80, p.sr), lastFlush:performance.now(), error:null, done:false,
+    roomLen:0, roomSkip:0, roomFill:0, roomBuf:null, roomDone:false, roomDb:-999, roomProfile:null};
+  const room = settings.room || 'off';
+  if(!punch && !test && (room === 'each' || (room === 'first' && !p.noise))){ r.roomSkip = Math.floor(0.3 * p.sr); r.roomLen = r.roomSkip + 3 * p.sr; }
   p.save();
   keepAwake(true);
   ctx();
@@ -567,12 +588,19 @@ async function finishRec(r){
   r.src.finish();
   const n = r.src.len;
   p.recSrc = -1;
+  const roomNew = r.roomDone && !!r.roomProfile;
+  if(roomNew){ p.noise = r.roomProfile; p.noiseA = -1; p.noiseB = -1; p.roomDb = r.roomDb; }
   if(n > 0 && !r.testing){
     p.commit(r.punch ? 'Düzeltme kaydı' : 'Kayıt', p.replaced(r.insA, r.insB, [seg(r.src.id, 0, n, 1)]));
   } else { p.sources.delete(r.src.id); deleteChunks(p.id, r.src.id); }
   await p.save();
+  let auto = false;
+  if(!r.testing && n > p.sr / 5 && settings.autoNr && p.noise){
+    const res = nrJob('autoNR', r.insA, r.insA + n, +settings.autoNrDb || 10, settings.nrSens != null ? +settings.nrSens : 6, 'Gürültü azalt (otomatik)');
+    auto = res.indexOf('"busy":true') >= 0;
+  }
   emit('rec', {done:true, a:r.testing ? 0 : r.insA, b:r.testing ? 0 : r.insA + n, error:r.error || '', punch:r.punch, left:!!r.left,
-    room:false, roomDb:-999, auto:false, lowSpace:false});
+    room:roomNew, roomDb: roomNew ? r.roomDb : -999, auto, lowSpace:false});
 }
 function snap(p, pos){
   const e = p.edl(); if(pos <= 0 || pos >= e.total) return Math.max(0, Math.min(e.total, pos));
@@ -639,7 +667,28 @@ async function replaceProcessed(label, a, b, ctxLen, body){
   p.saveSoon();
 }
 async function copyRange(e, a, b, out){ const buf = new Float32Array(1 << 15); for(let p = a; p < b;){ const c = Math.min(buf.length, b - p); e.read(p, buf, 0, c); out.append(buf, 0, c); p += c; } }
-const notYet = name => err(name + ' web sürümünde henüz yok. Android uygulamasında kullanılabilir.');
+const D = window.AXDSP;
+let previewOrig = false;
+function nrJob(op, a, b, redDb, sensDb, label){
+  const prof = cur.noise;
+  return startJob(op, 'Gürültü azaltılıyor', async () => {
+    const sr = cur.sr;
+    await replaceProcessed(label, a, b, Math.floor(sr / 20), async (e, A, B, out) => {
+      await chunked(A, B, D.NR_CHUNK, (buf, c0, n) => {
+        const s0 = c0 - D.NR_PAD; let wp = 0;
+        D.noiseReduce(e, s0, c0 + n + D.NR_PAD, sr, prof, redDb, sensDb, (bb, off, k) => {
+          for(let i = 0; i < k; i++){ const pos = s0 + wp + i; if(pos >= c0 && pos < c0 + n) buf[pos - c0] = bb[off + i]; }
+          wp += k;
+        });
+      }, out);
+    });
+    return {a, b, db:redDb};
+  });
+}
+/** Processes [A,B) in chunks (fn fills buf with processed samples of [c0,c0+n)), appending to out, yielding between chunks. */
+async function chunked(A, B, chunk, fn, out){
+  for(let c0 = A; c0 < B;){ const n = Math.min(chunk, B - c0), buf = new Float32Array(n); fn(buf, c0, n); out.append(buf, 0, n); c0 += n; await prog((c0 - A) / Math.max(1, B - A)); }
+}
 
 // =====================================================================================
 // state
@@ -647,8 +696,8 @@ const notYet = name => err(name + ' web sürümünde henüz yok. Android uygulam
 function state(){
   const p = cur; if(!p) return J({open:false});
   return J({ok:true, open:true, id:p.id, name:p.name, sr:p.sr, bps:4, len:p.length(), canUndo:p.undo.length > 0, canRedo:p.redo.length > 0,
-    undoLabel:p.undoLabel(), redoLabel:p.redoLabel(), clip: clip && clipProject === p.id ? clipLen : 0, noise:false, noiseSrc:'', roomDb:-999,
-    noiseA:-1, noiseB:-1, segs:p.segs.length});
+    undoLabel:p.undoLabel(), redoLabel:p.redoLabel(), clip: clip && clipProject === p.id ? clipLen : 0, noise:!!p.noise, noiseSrc: p.noise ? (p.noiseA < 0 ? 'room' : 'sel') : '',
+    noiseA:p.noiseA, noiseB:p.noiseB, segs:p.segs.length, roomDb: p.roomDb != null ? p.roomDb : -999});
 }
 function closeProject(){
   stopPlay();
@@ -789,7 +838,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.1",
+  version: () => "web 0.2",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();
@@ -898,7 +947,7 @@ const AX = window.AX = {
   level: () => {
     if(rec) return rec.level + ',' + rec.rms;
     if(!player || !cur) return '';
-    const v = levelAt(player.e, player.position()); return v[0] + ',' + v[1];
+    const v = levelAt(player.e, player.rel()); return v[0] + ',' + v[1];
   },
   // ---- recording ----
   recPrepare: a => recStartImpl('insert', a, a, true),
@@ -912,7 +961,7 @@ const AX = window.AX = {
     const free = Math.max(0, (storageEst.quota || 0) - (storageEst.usage || 0));
     return J({on:true, t:r.src.len, lvl:r.level, rms:r.rms, clip:r.clipped, paused:r.paused, pre:r.discard > 0, started:r.started,
       blocks:r.src.nBlocks, srcMode: settings.src === 'voice' ? 'voice' : 'unprocessed', ext:false, fmt:'32-bit float',
-      room:false, roomLen:0, roomPos:0, test:r.testing, roomDb:-999, free: free || 5e9, bytesPerSec: cur.sr * 4, low:false});
+      room: r.roomLen > 0 && !r.roomDone, roomLen:r.roomLen, roomPos:r.roomFill, test:r.testing, roomDb: r.roomDone ? r.roomDb : -999, free: free || 5e9, bytesPerSec: cur.sr * 4, low:false});
   },
   recPeaks: from => {
     const r = rec; if(!r) return '';
@@ -1022,11 +1071,116 @@ const AX = window.AX = {
       L.speech = cn ? 10 * Math.log10(ss / cn + 1e-24) : -240;
       return L;
     }); },
-  noiseProfile: () => notYet('Gürültü azaltma'), noiseReduce: () => notYet('Gürültü azaltma'),
-  breathDetect: () => notYet('Nefes temizleme'), breathApply: () => notYet('Nefes temizleme'),
-  heal: () => notYet('Onarma'), declick: () => notYet('Ağız/klik temizleme'),
-  humDetect: () => notYet('Uğultu giderme'), dehum: () => notYet('Uğultu giderme'),
-  preview: () => notYet('Önizleme'), previewAB: () => {},
+  noiseProfile: (a, b) => { if(!cur) return err('Proje açık değil'); const r = range(a, b);
+    return startJob('noiseProfile', 'Gürültü örneği alınıyor', async () => {
+      const p = cur, auto = r[1] - r[0] < p.sr / 4; let x = r[0], y = r[1];
+      await prog(0.1);
+      if(auto){ const q = D.quietestRegion(p.edl(), 0, p.length(), p.sr); if(!q) throw new Error("Sessiz bir bölüm bulunamadı. En az 0,3 sn'lik oda sesi seçin."); x = q[0]; y = q[1]; }
+      p.noise = D.noiseProfile(p.edl(), x, y, p.sr); p.noiseA = x; p.noiseB = y; p.roomDb = null; p.save();
+      return {a:x, b:y, auto};
+    }); },
+  noiseReduce: (a, b, redDb, sensDb) => {
+    if(!cur) return err('Proje açık değil'); if(!cur.noise) return err('Önce gürültü örneği alın');
+    const r = fullIfEmpty(a, b);
+    return nrJob('noiseReduce', r[0], r[1], redDb, sensDb, 'Gürültü azalt ' + Math.round(redDb) + ' dB');
+  },
+  breathDetect: (a, b, sens) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b);
+    return startJob('breathDetect', 'Nefesler aranıyor', async () => {
+      const out = [], ed = cur.edl();
+      // whole-range statistics matter, so detect in one pass over the range; yield before/after
+      await prog(0.05);
+      const l = D.detectBreaths(ed, r[0], r[1], cur.sr, sens);
+      for(const x of l){ out.push(x[0], x[1]); }
+      await prog(1);
+      return out;
+    }); },
+  breathApply: (regionsJson, dbv) => {
+    const g = guard(); if(g) return err(g);
+    let a; try { a = JSON.parse(regionsJson); } catch(e){ return err('Geçersiz bölge listesi'); }
+    const l = []; for(let i = 0; i + 1 < a.length; i += 2) l.push([Math.floor(a[i]), Math.floor(a[i + 1])]);
+    if(!l.length) return err('Seçili nefes yok');
+    l.sort((x, y) => x[0] - y[0]);
+    const f = dbv <= -90 ? 0 : undb(dbv);
+    cur.commit(dbv <= -90 ? 'Nefesleri sustur' : 'Nefesleri kıs ' + Math.round(dbv) + ' dB', cur.withRegions(l, f));
+    return done({count:l.length});
+  },
+  heal: (a, b) => {
+    if(!cur) return err('Proje açık değil');
+    const r = range(a, b), sr = cur.sr;
+    if(r[1] <= r[0]) return err('Önce onarılacak küçük bir bölümü seçin');
+    if(r[1] - r[0] > 30 * sr) return err("Onarım için en fazla 30 sn seçin (tüm kayıt için Klik Temizle'yi kullanın)");
+    return startJob('heal', 'Onarılıyor', async () => {
+      let fixed = 0; const gapMax = Math.floor(0.045 * sr);
+      await replaceProcessed('Onar', r[0], r[1], Math.floor(sr / 10), async (e, A, B, out) => {
+        const n = B - A, x = new Float32Array(n); e.read(A, x, 0, n); await prog(0.2);
+        const g0 = r[0] - A, g1 = r[1] - A;
+        if(r[1] - r[0] <= gapMax){ D.healGap(x, g0, g1, 32); fixed = 1; } else fixed = D.declick(x, g0, g1, sr, 0.7);
+        out.append(x, 0, n);
+      });
+      return {fixed};
+    });
+  },
+  declick: (a, b, sens) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b), sr = cur.sr;
+    return startJob('declick', 'Klikler temizleniyor', async () => {
+      let fixed = 0;
+      await replaceProcessed('Klik temizle', r[0], r[1], Math.floor(sr / 20), async (e, A, B, out) => {
+        await copyRange(e, A, r[0], out);
+        const pad = 2048;
+        await chunked(r[0], r[1], 2 * sr, (buf, c0, n) => {
+          const x = new Float32Array(n + 2 * pad); e.read(c0 - pad, x, 0, n + 2 * pad);
+          fixed += D.declick(x, pad, pad + n, sr, sens); buf.set(x.subarray(pad, pad + n));
+        }, out);
+        await copyRange(e, r[1], B, out);
+      });
+      return {fixed};
+    }); },
+  humDetect: (a, b) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b); const h = D.humDetect(cur.edl(), r[0], r[1], cur.sr);
+    return J({ok:true, f0: Math.round(h[0] * 100) / 100, prom: Math.round(h[1] * 10) / 10}); },
+  dehum: (a, b, f0, harm, lowCut) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b), sr = cur.sr;
+    return startJob('dehum', 'Uğultu gideriliyor', async () => {
+      await replaceProcessed('Uğultu giderme', r[0], r[1], Math.floor(sr / 20), async (e, A, B, out) => {
+        const d = harm > 0 ? new D.Dehum(sr, f0, harm, 3.0) : null;
+        const h1 = lowCut ? D.Biquad.highpass(80, sr) : null, h2 = lowCut ? D.Biquad.highpass(80, sr) : null;
+        const buf = new Float32Array(1 << 15); let pos = A - sr;
+        while(pos < B){
+          const n = Math.min(buf.length, (pos < A ? A : B) - pos); e.read(pos, buf, 0, n);
+          if(d) d.process(buf, 0, n);
+          if(h1) for(let i = 0; i < n; i++) buf[i] = h2.run(h1.run(buf[i]));
+          if(pos < A){ pos += n; continue; }
+          out.append(buf, 0, n); pos += n; await prog((pos - A) / Math.max(1, B - A));
+        }
+      });
+      return {f0};
+    }); },
+  preview: (op, a, b, paramsJson) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b), sr = cur.sr, end = Math.min(r[1], r[0] + 8 * sr);
+    return startJob('preview', 'Önizleme hazırlanıyor', async () => {
+      let prm = {}; try { prm = JSON.parse(paramsJson || '{}'); } catch(e){}
+      const n = end - r[0], out = new Float32Array(n), orig = new Float32Array(n), e = cur.edl();
+      e.read(r[0], orig, 0, n); previewOrig = false;
+      if(op === 'noiseReduce'){
+        if(!cur.noise) throw new Error('Önce gürültü örneği alın');
+        let wp = 0;
+        D.noiseReduce(e, r[0], end, sr, cur.noise, prm.red != null ? prm.red : 12, prm.sens != null ? prm.sens : 6, (bb, off, c) => { const m = Math.min(c, n - wp); if(m > 0) out.set(bb.subarray(off, off + m), wp); wp += c; });
+      } else if(op === 'dehum'){
+        const hm = prm.harm != null ? prm.harm : 8, d = hm > 0 ? new D.Dehum(sr, prm.f0 || 50, hm, 3.0) : null, lc = prm.lowCut !== false;
+        const h1 = D.Biquad.highpass(80, sr), h2 = D.Biquad.highpass(80, sr), warm = new Float32Array(sr);
+        e.read(r[0] - sr, warm, 0, sr); if(d) d.process(warm, 0, sr); if(lc) for(let i = 0; i < sr; i++) h2.run(h1.run(warm[i]));
+        e.read(r[0], out, 0, n); if(d) d.process(out, 0, n); if(lc) for(let i = 0; i < n; i++) out[i] = h2.run(h1.run(out[i]));
+      } else if(op === 'declick'){
+        const pad = 2048, x = new Float32Array(n + 2 * pad); e.read(r[0] - pad, x, 0, x.length);
+        D.declick(x, pad, pad + n, sr, prm.sens != null ? prm.sens : 0.5); out.set(x.subarray(pad, pad + n));
+      } else e.read(r[0], out, 0, n);
+      await prog(1);
+      const br = {read: (pos, o, off, c) => { const src = previewOrig ? orig : out; for(let i = 0; i < c; i++){ const x = pos + i; o[off + i] = x >= 0 && x < n ? src[x] : 0; } }};
+      // playback starts once the job has finished (startJob stops playback on entry)
+      setTimeout(() => {
+        stopPlay();
+        const pl = player = new Player(br, sr, 0, n, who => { if(player === who){ player = null; emit('play', {end:true}); } }, r[0]);
+        pl.start();
+      }, 0);
+      return {a:r[0], b:end};
+    }); },
+  previewAB: orig => { previewOrig = !!orig; },
   job: () => J({busy, label:busyLabel, p:progress}),
   cancelJob: () => { cancel = true; },
   // ---- teleprompter ----
