@@ -435,6 +435,18 @@ html,body{background:var(--bg)}
 .trans{position:relative;padding-top:12px}
 .trans::before{content:"";position:absolute;left:18px;right:18px;top:3px;height:2px;border-radius:1px;background:#06070a;box-shadow:0 1px 0 rgba(255,255,255,.07),inset 0 1px 1px rgba(0,0,0,.6)}
 
+/* ===== 0.3.3 neon lens tabs ===== */
+.tabs{position:relative;isolation:isolate;background:rgba(0,0,0,.30);border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:4px;gap:0;touch-action:pan-y;box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
+.tabs button,.tabs button.on{position:relative;z-index:1;background:none;box-shadow:none;border-radius:18px;height:36px;transition:color .3s;-webkit-user-select:none;user-select:none}
+.tabs button.on{color:#eafffa;text-shadow:0 0 10px rgba(47,224,192,.45)}
+.tabs .lens{position:absolute;z-index:0;top:4px;bottom:4px;left:4px;width:0;border-radius:18px;pointer-events:none;opacity:0;
+  background:linear-gradient(180deg,rgba(170,248,230,.34),rgba(47,224,192,.13) 60%,rgba(47,224,192,.20));
+  border:1px solid rgba(170,255,232,.42);
+  box-shadow:0 0 16px rgba(47,224,192,.30),0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.30),inset 0 -5px 10px rgba(0,0,0,.16);
+  transition:left .34s cubic-bezier(.3,1.35,.5,1),width .34s cubic-bezier(.3,1.35,.5,1),opacity .2s}
+.tabs .lens::after{content:"";position:absolute;left:12%;right:12%;bottom:-7px;height:10px;border-radius:50%;background:rgba(47,224,192,.28);filter:blur(7px)}
+.tabs .lens.fast{transition:left .14s ease-out,width .14s ease-out,opacity .2s}
+.tabs .lens.drag{transition:none}
 /* ===== 0.3.0 single-row scrolling tools ===== */
 @media (orientation:portrait){
 .toolrow{display:flex;gap:2px;overflow-x:auto;scroll-snap-type:x proximity;padding:8px 6px 10px;-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent)}
@@ -567,6 +579,7 @@ html,body{background:var(--bg)}
       <button data-t="edit" class="on">Düzenle</button>
       <button data-t="clean">Temizle</button>
       <button data-t="level">Seviye</button>
+      <i class="lens" aria-hidden="true"></i>
     </div>
     <div class="toolrow" id="toolrow"></div>
   </div>
@@ -733,6 +746,7 @@ function enterEditor(st){
   setState(st);
   S.cursor = 0; S.sel = null; S.breath = null; S.ppos=-1;
   showScreen('editor');
+  requestAnimationFrame(()=>placeLens(S.tab, false));
   specCache = null; specPend = null; setSpec((()=>{try{return localStorage.getItem('spec')==='1'}catch(e){return false}})());
   loadScriptSent();
 }
@@ -951,8 +965,48 @@ function renderTools(){
   });
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===S.tab));
   updateButtons();
+  const L = document.querySelector('#tabs .lens'); if(L && !L.style.width) requestAnimationFrame(()=>placeLens(S.tab, false));
 }
-$('tabs').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; S.tab = b.dataset.t; renderTools(); };
+$('tabs').onclick = e=>{ if(lensDrag.suppress){ lensDrag.suppress = false; return; } const b = e.target.closest('button'); if(!b) return; selectTab(b.dataset.t); };
+// --- neon lens: glass highlight that stretches toward the new tab, then settles; drag a finger along the bar to slide it ---
+const lensDrag = {on:false, moved:false, x0:0, suppress:false};
+function tabRect(t){ const b = document.querySelector('#tabs button[data-t="'+t+'"]'); return b ? {l:b.offsetLeft, w:b.offsetWidth} : null; }
+function placeLens(t, animate){
+  const L = document.querySelector('#tabs .lens'), r = tabRect(t); if(!L || !r || !r.w) return;
+  if(!animate){ L.classList.add('drag'); L.style.left = r.l+'px'; L.style.width = r.w+'px'; L.style.opacity = 1; void L.offsetWidth; L.classList.remove('drag'); return; }
+  const curL = parseFloat(L.style.left)||r.l, curW = parseFloat(L.style.width)||r.w;
+  const a = Math.min(curL, r.l), b = Math.max(curL+curW, r.l+r.w);
+  clearTimeout(L._t); L.classList.remove('drag'); L.classList.add('fast');
+  L.style.left = a+'px'; L.style.width = (b-a)+'px'; L.style.opacity = 1;          // stretch over both tabs
+  L._t = setTimeout(()=>{ L.classList.remove('fast'); L.style.left = r.l+'px'; L.style.width = r.w+'px'; }, 140);   // settle with a little overshoot
+}
+function selectTab(t){ if(S.tab === t){ placeLens(t, true); return; } S.tab = t; renderTools(); placeLens(t, true); }
+(()=>{
+  const bar = $('tabs');
+  bar.addEventListener('pointerdown', e=>{ lensDrag.on = true; lensDrag.moved = false; lensDrag.x0 = e.clientX; });
+  bar.addEventListener('pointermove', e=>{
+    if(!lensDrag.on) return;
+    if(!lensDrag.moved && Math.abs(e.clientX - lensDrag.x0) < 8) return;
+    if(!lensDrag.moved){ lensDrag.moved = true; try{ bar.setPointerCapture(e.pointerId); }catch(_){} }
+    const L = bar.querySelector('.lens'), br = bar.getBoundingClientRect(), r = tabRect(S.tab); if(!r) return;
+    const x = Math.max(4 + r.w/2, Math.min(bar.clientWidth - 4 - r.w/2, e.clientX - br.left));
+    L.classList.add('drag'); L.style.left = (x - r.w/2)+'px'; L.style.width = r.w+'px';
+    // highlight the tab under the finger while dragging
+    const near = [...bar.querySelectorAll('button')].reduce((best, b)=>{ const d = Math.abs(b.offsetLeft + b.offsetWidth/2 - x); return !best || d < best.d ? {b, d} : best; }, null);
+    bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b === near.b));
+  });
+  const end = e=>{
+    if(!lensDrag.on) return; lensDrag.on = false;
+    if(!lensDrag.moved) return;
+    lensDrag.suppress = true; setTimeout(()=>{ lensDrag.suppress = false; }, 350);
+    const on = bar.querySelector('button.on'), t = on ? on.dataset.t : S.tab;
+    bar.querySelector('.lens').classList.remove('drag');
+    if(t !== S.tab){ S.tab = t; renderTools(); }
+    placeLens(t, true); vib && vib();
+  };
+  bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
+  addEventListener('resize', ()=>placeLens(S.tab, false));
+})();
 
 function edit(op){
   const s = selOrNull();
