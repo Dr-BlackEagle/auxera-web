@@ -340,6 +340,178 @@ function humDetect(r, a, b, sr){
   return [bestF, 20 * Math.log10(Math.max(1e-6, prom))];
 }
 
+
+// ---------------------------------------------------------------- latency calibration (port of Dsp.latency*)
+const LAT_SPACING = 0.40, LAT_CLICKS = 5;
+function latencyTemplate(sr){ const n = Math.max(32, Math.floor(0.006 * sr)), t = new Float32Array(n); let ph = 0;
+  for(let i = 0; i < n; i++){ const u = i / n, f = 1500 + 4500 * u; ph += 2 * Math.PI * f / sr; t[i] = Math.sin(ph) * (0.5 - 0.5 * Math.cos(2 * Math.PI * u)); } return t; }
+function latencyClicks(sr){ const c = []; for(let k = 0; k < LAT_CLICKS; k++) c.push(Math.round((0.25 + k * LAT_SPACING) * sr)); return c; }
+function latencySignal(sr, pre){ const c = latencyClicks(sr), tpl = latencyTemplate(sr), s = new Float32Array(pre + c[c.length - 1] + Math.floor(0.5 * sr));
+  for(const at of c) for(let i = 0; i < tpl.length; i++) s[pre + at + i] += 0.6 * tpl[i]; return s; }
+function ncc(x, n, tpl, a, b){
+  let te = 0; for(const v of tpl) te += v * v;
+  a = Math.max(0, a); b = Math.min(n - tpl.length, b);
+  const out = new Float64Array(Math.max(0, b - a)); let win = 0;
+  for(let i = a; i < a + tpl.length && i < n; i++) win += x[i] * x[i];
+  for(let i = a; i < b; i++){ let c = 0; for(let k = 0; k < tpl.length; k++) c += x[i + k] * tpl[k]; out[i - a] = c / Math.sqrt(te * win + 1e-20); win += x[i + tpl.length] * x[i + tpl.length] - x[i] * x[i]; if(win < 0) win = 0; }
+  return out;
+}
+function latencyMeasure(x, n, sr, expect){
+  if(!x || n <= 0) return NaN;
+  const tpl = latencyTemplate(sr), a0 = expect[0] - Math.floor(0.2 * sr), c0 = ncc(x, n, tpl, a0, expect[0] + Math.floor(1.0 * sr));
+  let mx = 0; for(const v of c0) mx = Math.max(mx, v); if(mx < 0.5) return NaN;
+  let first = -1;
+  for(let i = 0; i < c0.length; i++) if(c0[i] >= 0.8 * mx){ let j = i; while(j + 1 < c0.length && c0[j + 1] > c0[j]) j++; first = Math.max(0, a0) + j; break; }
+  const lag = first - expect[0], W = Math.floor(0.03 * sr), offs = [];
+  for(const at of expect){ const a = at + lag - W, c = ncc(x, n, tpl, a, at + lag + W); let best = 0, bi = -1;
+    for(let i = 0; i < c.length; i++) if(c[i] > best){ best = c[i]; bi = Math.max(0, a) + i; }
+    if(bi >= 0 && best > 0.5) offs.push((bi - at) * 1000 / sr); }
+  if(offs.length < 3) return NaN;
+  offs.sort((p, q) => p - q); const med = offs[offs.length >> 1];
+  return offs.filter(v => Math.abs(v - med) < 3).length >= 3 ? med : NaN;
+}
+
+// ---------------------------------------------------------------- loudness (port of Dsp.KWeight / TruePeak / loudness / gainLimit)
+class KWeight {
+  constructor(sr){
+    let f0 = 1681.974450955533, G = 3.999843853973347, Q = 0.7071752369554196;
+    let K = Math.tan(Math.PI * f0 / sr); const Vh = Math.pow(10, G / 20), Vb = Math.pow(Vh, 0.4996667741545416); let a0 = 1 + K / Q + K * K;
+    this.b0 = (Vh + Vb * K / Q + K * K) / a0; this.b1 = 2 * (K * K - Vh) / a0; this.b2 = (Vh - Vb * K / Q + K * K) / a0; this.a1 = 2 * (K * K - 1) / a0; this.a2 = (1 - K / Q + K * K) / a0;
+    f0 = 38.13547087602444; Q = 0.5003270373238773; K = Math.tan(Math.PI * f0 / sr); a0 = 1 + K / Q + K * K;
+    this.c1 = 2 * (K * K - 1) / a0; this.c2 = (1 - K / Q + K * K) / a0;
+    this.s1a = 0; this.s2a = 0; this.s1b = 0; this.s2b = 0;
+  }
+  run(x){
+    const y = this.b0 * x + this.s1a; this.s1a = this.b1 * x - this.a1 * y + this.s2a; this.s2a = this.b2 * x - this.a2 * y;
+    const z = y + this.s1b; this.s1b = -2 * y - this.c1 * z + this.s2b; this.s2b = y - this.c2 * z;
+    return z;
+  }
+}
+class TruePeak {
+  constructor(){
+    const L = 4, T = 12, N = L * T, c = (N - 1) / 2; this.L = L; this.T = T; this.h = [];
+    for(let p = 0; p < L; p++) this.h.push(new Float64Array(T));
+    for(let n = 0; n < N; n++){ const t = (n - c) / L, sinc = t === 0 ? 1 : Math.sin(Math.PI * t) / (Math.PI * t), w = 0.5 - 0.5 * Math.cos(2 * Math.PI * (n + 0.5) / N); this.h[n % L][Math.floor(n / L)] = sinc * w; }
+    for(const ph of this.h){ let s = 0; for(const v of ph) s += v; for(let j = 0; j < T; j++) ph[j] /= s; }
+    this.hist = new Float64Array(T); this.hp = 0; this.max = 0;
+  }
+  push(x){
+    const T = this.T, hist = this.hist; hist[this.hp] = x; this.hp = (this.hp + 1) % T;
+    const ax = Math.abs(x); if(ax > this.max) this.max = ax;
+    for(let p = 0; p < this.L; p++){ const h = this.h[p]; let y = 0; for(let j = 0; j < T; j++) y += h[j] * hist[(this.hp - 1 - j + 2 * T) % T]; const ay = Math.abs(y); if(ay > this.max) this.max = ay; }
+  }
+}
+const lufs = ms => -0.691 + 10 * Math.log10(ms + 1e-30);
+class LoudMeter {
+  constructor(sr){ this.hop = Math.max(1, Math.round(0.1 * sr)); this.k = new KWeight(sr); this.tp = new TruePeak(); this.e = new Float64Array(1024); this.subs = 0; this.inSub = 0; this.acc = 0; }
+  push(buf, off, n){
+    const k = this.k, tp = this.tp, hop = this.hop;
+    for(let i = off; i < off + n; i++){ const x = buf[i]; tp.push(x); const z = k.run(x); this.acc += z * z;
+      if(++this.inSub === hop){ if(this.subs === this.e.length){ const ne = new Float64Array(this.e.length * 2); ne.set(this.e); this.e = ne; } this.e[this.subs++] = this.acc; this.acc = 0; this.inSub = 0; } }
+  }
+  result(){
+    const out = {integrated:-Infinity, lra:0, momentaryMax:-Infinity, shortMax:-Infinity, truePeak:-240}, e = this.e, subs = this.subs, hop = this.hop, tp = this.tp;
+    for(let i = 0; i < tp.T; i++) tp.push(0);
+    out.truePeak = tp.max > 1e-12 ? 20 * Math.log10(tp.max) : -240;
+    const nb = subs - 3, mz = new Float64Array(Math.max(0, nb));
+    for(let j = 0; j < nb; j++){ mz[j] = (e[j] + e[j+1] + e[j+2] + e[j+3]) / (4 * hop); out.momentaryMax = Math.max(out.momentaryMax, lufs(mz[j])); }
+    let sum = 0, cnt = 0; for(const z of mz) if(lufs(z) > -70){ sum += z; cnt++; }
+    if(cnt){ const rel = lufs(sum / cnt) - 10; let s2 = 0, c2 = 0; for(const z of mz){ const l = lufs(z); if(l > -70 && l > rel){ s2 += z; c2++; } } if(c2) out.integrated = lufs(s2 / c2); }
+    const ns = subs - 29;
+    if(ns > 0){
+      const st = new Float64Array(ns); let run = 0; for(let j = 0; j < 30; j++) run += e[j];
+      for(let j = 0; j < ns; j++){ if(j > 0) run += e[j + 29] - e[j - 1]; st[j] = run / (30 * hop); out.shortMax = Math.max(out.shortMax, lufs(st[j])); }
+      let s3 = 0, c3 = 0; for(const z of st) if(lufs(z) > -70){ s3 += z; c3++; }
+      if(c3){ const rel = lufs(s3 / c3) - 20, v = []; for(const z of st){ const l = lufs(z); if(l > -70 && l > rel) v.push(l); }
+        if(v.length > 1){ v.sort((x, y) => x - y); out.lra = v[Math.round(0.95 * (v.length - 1))] - v[Math.round(0.10 * (v.length - 1))]; } }
+    }
+    return out;
+  }
+}
+/** async: yields via tick(frac) (which may throw to cancel) */
+async function loudness(r, a, b, sr, gain, tick){
+  const m = new LoudMeter(sr), buf = new Float32Array(1 << 15), n = b - a;
+  for(let pos = a; pos < b;){ const c = Math.min(buf.length, b - pos); r.read(pos, buf, 0, c); if(gain !== 1) for(let i = 0; i < c; i++) buf[i] *= gain; m.push(buf, 0, c); pos += c; if(tick) await tick((pos - a) / Math.max(1, n)); }
+  return m.result();
+}
+async function gainLimit(r, A, B, sr, gain, c, sink, tick){
+  const W = Math.max(8, Math.round(0.0015 * sr)), rel = 1 - Math.exp(-1 / (0.080 * sr)), Q = W + 1;
+  const dly = new Float64Array(W), gq = new Float64Array(W), dqI = new Float64Array(Q), dqV = new Float64Array(Q);
+  let dqH = 0, dqT = 0, g1 = 1, box = 0, pos = A, t = 0, written = 0, on = 0;
+  const inb = new Float32Array(1 << 14), out = new Float32Array(1 << 14), total = B - A, readEnd = B + W;
+  while(pos < readEnd){
+    const cnt = Math.min(inb.length, readEnd - pos); r.read(pos, inb, 0, cnt);
+    for(let i = 0; i < cnt; i++, t++){
+      const y = inb[i] * gain, ay = Math.abs(y), req = ay > c ? c / ay : 1;
+      while(dqT > dqH && dqV[(dqT - 1) % Q] >= req) dqT--;
+      dqI[dqT % Q] = t; dqV[dqT % Q] = req; dqT++;
+      while(dqI[dqH % Q] <= t - W) dqH++;
+      dly[t % W] = y;
+      if(t < W - 1) continue;
+      const m = dqV[dqH % Q]; g1 = Math.min(m, g1 + (1 - g1) * rel);
+      const gi = t % W; box += g1 - gq[gi]; gq[gi] = g1;
+      const p = t - (W - 1), g = t >= 2 * W - 2 ? box / W : g1;
+      let v = dly[p % W] * g; if(Math.abs(v) > c) v = Math.sign(v) * c;
+      if(p < total){ out[on++] = v; if(on === out.length){ sink(out, 0, on); written += on; on = 0; } }
+    }
+    pos += cnt; if(tick) await tick((pos - A) / Math.max(1, readEnd - A));
+  }
+  if(on > 0){ sink(out, 0, on); written += on; }
+  while(written < total){ const k2 = Math.min(1 << 14, total - written); sink(new Float32Array(k2), 0, k2); written += k2; }
+}
+
+// ---------------------------------------------------------------- spectral repair (port of Dsp.spectralRepair)
+function refMedian(x, X0, from, to, N, H, w, fft, lo, hi){
+  const fr = [], re = new Float64Array(N), im = new Float64Array(N);
+  for(let c = from; c <= to; c += H){
+    const s0 = c - N / 2 - X0; if(s0 < 0 || s0 + N > x.length) continue;
+    for(let i = 0; i < N; i++){ re[i] = x[s0 + i] * w[i]; im[i] = 0; }
+    fft.run(re, im, false);
+    const m = new Float64Array(hi - lo + 1); for(let k = lo; k <= hi; k++) m[k - lo] = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+    fr.push(m);
+  }
+  if(!fr.length) return null;
+  const med = new Float64Array(hi - lo + 1), col = new Float64Array(fr.length);
+  for(let k = 0; k < med.length; k++){ for(let i = 0; i < col.length; i++) col[i] = fr[i][k]; col.sort(); med[k] = col[col.length >> 1]; }
+  return med;
+}
+function spectralRepair(r, A, B, a, b, sr, f0, f1, attenuate, attDb, sink, tick){
+  const N = nrSize(sr), H = N / 4, nb = N / 2 + 1, fft = FFT.of(N), w = hann(N), ola = 1 / 1.5;
+  let k0 = Math.max(1, Math.floor(f0 * N / sr)), k1 = Math.min(nb - 1, Math.ceil(f1 * N / sr)); if(k1 < k0) k1 = k0;
+  const T = 2, lo = Math.max(1, k0 - T), hi = Math.min(nb - 1, k1 + T);
+  const X0 = A - N, len = B + N - X0, x = new Float32Array(len); r.read(X0, x, 0, len);
+  const out = new Float64Array(len), re = new Float64Array(N), im = new Float64Array(N);
+  const R = Math.floor(0.15 * sr);
+  const refB = refMedian(x, X0, a - N / 2 - R, a - N / 2, N, H, w, fft, lo, hi);
+  const refA = refMedian(x, X0, b + N / 2, b + N / 2 + R, N, H, w, fft, lo, hi);
+  const ma = a - N / 2 + H / 2, mb = b + N / 2 - H / 2;
+  if(!refB && !refA) attenuate = true;
+  const att = undb(attDb);
+  let c0 = A - N / 2; c0 = c0 - (((c0 - ma) % H) + H) % H;
+  const nf = Math.floor((B + N / 2 - c0) / H) + 1, selFrames = Math.max(1, Math.ceil((mb - ma) / H)), g = new Float64Array(nb);
+  for(let j = 0; j < nf; j++){
+    const c = c0 + j * H, s0 = c - N / 2 - X0;
+    if(s0 < 0 || s0 + N > len) continue;
+    if(!(c >= ma && c < mb)){ for(let i = 0; i < N; i++) out[s0 + i] += x[s0 + i] * w[i] * w[i] * ola; continue; }
+    for(let i = 0; i < N; i++){ re[i] = x[s0 + i] * w[i]; im[i] = 0; }
+    fft.run(re, im, false);
+    const t = (c - ma) / Math.max(1, mb - ma), fi = Math.floor((c - ma) / H), fo = selFrames - 1 - fi, tw = Math.min(1, Math.min((fi + 1) / 3, (fo + 1) / 3));
+    g.fill(1);
+    for(let k = lo; k <= hi; k++){
+      let gk;
+      if(attenuate) gk = att;
+      else { const ref = !refB ? refA[k - lo] : !refA ? refB[k - lo] : (1 - t) * refB[k - lo] + t * refA[k - lo]; const mag = Math.sqrt(re[k] * re[k] + im[k] * im[k]); gk = mag > ref ? ref / (mag + 1e-20) : 1; }
+      const bw = k < k0 ? 0.5 - 0.5 * Math.cos(Math.PI * (k - lo + 1) / (k0 - lo + 1)) : k > k1 ? 0.5 - 0.5 * Math.cos(Math.PI * (hi - k + 1) / (hi - k1 + 1)) : 1;
+      g[k] = 1 + (gk - 1) * bw * tw;
+    }
+    for(let i = 0; i < N; i++){ const k = i <= N / 2 ? i : N - i; re[i] *= g[k]; im[i] *= g[k]; }
+    fft.run(re, im, true);
+    for(let i = 0; i < N; i++) out[s0 + i] += re[i] * w[i] * ola;
+    if(tick && (j & 63) === 0) tick(j / nf);
+  }
+  const from = A - X0, n = B - A, buf = new Float32Array(1 << 14);
+  for(let o = 0; o < n;){ const c = Math.min(buf.length, n - o); for(let i = 0; i < c; i++) buf[i] = out[from + o + i]; sink(buf, 0, c); o += c; }
+}
 const NR_CHUNK = 4096 * 117, NR_PAD = 4096 * 6;
-window.AXDSP = {FFT, Cancelled, Biquad, Dehum, noiseProfile, noiseReduce, quietestRegion, frameEnergy, detectBreaths, burg, healGap, declick, humDetect, NR_CHUNK, NR_PAD, nrSize};
+window.AXDSP = {spectralRepair, LoudMeter, loudness, gainLimit, latencySignal, latencyClicks, latencyMeasure, FFT, Cancelled, Biquad, Dehum, noiseProfile, noiseReduce, quietestRegion, frameEnergy, detectBreaths, burg, healGap, declick, humDetect, NR_CHUNK, NR_PAD, nrSize};
 })();

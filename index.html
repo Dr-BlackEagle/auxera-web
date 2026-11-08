@@ -435,6 +435,11 @@ html,body{background:var(--bg)}
 .trans{position:relative;padding-top:12px}
 .trans::before{content:"";position:absolute;left:18px;right:18px;top:3px;height:2px;border-radius:1px;background:#06070a;box-shadow:0 1px 0 rgba(255,255,255,.07),inset 0 1px 1px rgba(0,0,0,.6)}
 
+/* ===== 0.3.4 choice list ===== */
+.choice{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.choice button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:11px 14px;border-radius:14px;border:1px solid var(--line2);background:var(--raise);color:var(--text)}
+.choice button b{font-weight:600;font-size:14.5px}.choice button small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.choice button.on{border-color:var(--wave);background:rgba(47,224,192,.10);box-shadow:inset 0 0 0 1px var(--wave)}
 /* ===== 0.3.3 neon lens tabs ===== */
 .tabs{position:relative;isolation:isolate;background:rgba(0,0,0,.30);border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:4px;gap:0;touch-action:pan-y;box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
 .tabs button,.tabs button.on{position:relative;z-index:1;background:none;box-shadow:none;border-radius:18px;height:36px;transition:color .3s;-webkit-user-select:none;user-select:none}
@@ -482,6 +487,7 @@ html,body{background:var(--bg)}
     <symbol id="i-all" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" stroke-dasharray="3 2.4"/><path d="M8 12h8"/></symbol>
     <symbol id="i-noise" viewBox="0 0 24 24"><path d="M3 12h2l1.5-3 2 7 2-11 2 13 2-9 1.5 5 1.5-2H21"/><path d="M4 21 20 3" stroke-width="1.6" opacity=".55"/></symbol>
     <symbol id="i-breath" viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15.5a2.5 2.5 0 1 1-2.5 2.5"/><path d="M3 16h7a2.5 2.5 0 1 1-2.5 2.5"/></symbol>
+    <symbol id="i-spot" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><rect x="9" y="7.5" width="6" height="6" rx="1" stroke-dasharray="2 1.6"/><path d="M7 16.5h10"/></symbol>
     <symbol id="i-heal" viewBox="0 0 24 24"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)"/><circle cx="10.6" cy="12" r=".9" fill="currentColor" stroke="none"/><circle cx="13.4" cy="12" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="10.6" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="13.4" r=".9" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></symbol>
     <symbol id="i-spec" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 15.5h2.5M7 12h5M7 8.5h2M12.5 15.5h4.5M14.5 8.5h2.5M15.5 12h1.5"/></symbol>
@@ -497,6 +503,7 @@ html,body{background:var(--bg)}
     <symbol id="i-norm" viewBox="0 0 24 24"><path d="M3 5h18" stroke-dasharray="2.5 2.5"/><path d="M6 20v-6M10 20v-9M14 20v-12M18 20v-8"/></symbol>
     <symbol id="i-fin" viewBox="0 0 24 24"><path d="M3 20C10 20 14 13 21 4"/><path d="M3 20h18" opacity=".45"/></symbol>
     <symbol id="i-fout" viewBox="0 0 24 24"><path d="M3 4c7 9 11 16 18 16"/><path d="M3 20h18" opacity=".45"/></symbol>
+    <symbol id="i-lufs" viewBox="0 0 24 24"><path d="M3 7h18" stroke-dasharray="2 2.2"/><path d="M6 19v-6M10 19V9M14 19v-8M18 19v-5"/></symbol>
     <symbol id="i-meter" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5" y="11" width="3" height="6" rx=".6"/><rect x="10.5" y="6" width="3" height="11" rx=".6"/><rect x="16" y="9" width="3" height="8" rx=".6"/></symbol>
     <symbol id="i-zin" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6M10.5 7.8v5.4M7.8 10.5h5.4"/></symbol>
     <symbol id="i-zout" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6M7.8 10.5h5.4"/></symbol>
@@ -931,6 +938,7 @@ const TOOLS = {
     {id:'heal', l:'Onar', i:'heal', need:'audio', acc:1, fn:()=>doHeal()},
     {id:'click', l:'Ağız/klik', i:'click', need:'audio', acc:1, fn:()=>sheetClick()},
     {id:'hum', l:'Uğultu/gürleme', i:'hum', need:'audio', acc:1, fn:()=>sheetHum()},
+    {id:'spot', l:'Spektral onar', i:'spot', need:'audio', acc:1, fn:()=>sheetSpot()},
     {id:'shrink', l:'Boşluk kısalt', i:'shrink', need:'audio', acc:1, fn:()=>sheetTrunc()},
   ],
   level:[
@@ -938,6 +946,7 @@ const TOOLS = {
     {id:'gain', l:'Gain', i:'gain', need:'audio', acc:1, fn:()=>sheetGain()},
     {id:'fin', l:'Yumuşak giriş', i:'fin', need:'sel', fn:()=>runJob(AX.fade(S.sel.a, S.sel.b, true))},
     {id:'fout', l:'Yumuşak çıkış', i:'fout', need:'sel', fn:()=>runJob(AX.fade(S.sel.a, S.sel.b, false))},
+    {id:'loud', l:'Ses yüksekliği', i:'lufs', need:'audio', acc:1, fn:()=>sheetLoud()},
     {id:'meter', l:'Analiz', i:'meter', need:'audio', acc:1, fn:()=>doAnalyze()},
   ]
 };
@@ -950,7 +959,9 @@ const TOOL_HELP = {
   click:'Ağız şapırtısı ve dijital tıkları otomatik bulup onarır.', hum:'Şebeke uğultusunu (50/60 Hz) ve 80 Hz altı gürlemeyi siler.',
   shrink:'Cümle aralarındaki uzun sessizlikleri kısaltır.', norm:'En yüksek tepeyi hedef seviyeye (ör. −3 dB) getirir.',
   gain:'Sesi belirli dB kadar yükseltir ya da alçaltır.', fin:'Seçimin başını sessizlikten yumuşakça açar.', fout:'Seçimin sonunu yumuşakça kapatır.',
-  meter:'Tepe, ortalama ve gürültü tabanını ölçer; teslim ölçütleriyle karşılaştırır.'
+  meter:'Tepe, ortalama, gürültü tabanı ve LUFS ses yüksekliğini ölçer; teslim ölçütleriyle karşılaştırır.',
+  spot:'Spektrumda seçtiğiniz kutuyu (zaman × frekans) onarır: ağız sesi, tık, telefon sesi gibi tek bir sesi konuşmaya dokunmadan siler.',
+  loud:'Algılanan ses yüksekliğini (LUFS) podcast, yayın ya da akış hedefine getirir; tepeler sınırlanır.'
 };
 function renderTools(){
   const row = $('toolrow');
@@ -1116,7 +1127,7 @@ function paintSpec(c, cw, ch){
 }
 function specFreqY(f, ch){ const nyq = S.sr/2; return (1 - Math.log(f/SPEC_FMIN)/Math.log(nyq/SPEC_FMIN))*ch; }
 function setSpec(on){
-  S.spec = !!on; try{ localStorage.setItem('spec', S.spec?'1':'0'); }catch(e){}
+  S.spec = !!on; if(!S.spec) S.fsel = null; try{ localStorage.setItem('spec', S.spec?'1':'0'); }catch(e){}
   const b = $('specBtn'); if(b){ b.classList.toggle('on', S.spec); b.setAttribute('aria-pressed', S.spec?'true':'false'); }
   $('vzBtn').style.display = S.spec? 'none' : '';
   const vv = $('vmVal'); if(vv && (vv.textContent==='dB' || vv.textContent==='Hz')) vv.textContent = S.spec? 'Hz' : 'dB';
@@ -1154,7 +1165,14 @@ function paint(){
     });
   }
   // selection background
-  if(s){ c.fillStyle = S.spec? 'rgba(170,190,255,0.20)' : 'rgba(120,150,255,0.17)'; c.fillRect(sx0, 0, Math.max(1, sx1-sx0), ch); }
+  if(s){
+    if(S.spec && S.fsel){
+      const y0 = specFreqY(S.fsel.hi, ch), y1 = specFreqY(S.fsel.lo, ch), wd = Math.max(1, sx1-sx0);
+      c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(sx0, 0, wd, y0); c.fillRect(sx0, y1, wd, ch-y1);
+      c.fillStyle = 'rgba(170,190,255,0.14)'; c.fillRect(sx0, y0, wd, y1-y0);
+      c.save(); c.setLineDash([5*dpr, 4*dpr]); c.strokeStyle = 'rgba(220,230,255,0.9)'; c.lineWidth = 1.2*dpr; c.strokeRect(sx0+0.5, y0+0.5, wd-1, y1-y0-1); c.restore();
+    } else { c.fillStyle = S.spec? 'rgba(170,190,255,0.20)' : 'rgba(120,150,255,0.17)'; c.fillRect(sx0, 0, Math.max(1, sx1-sx0), ch); }
+  }
   // waveform
   if(S.len>0 && !S.spec){
     const pk = getPeaks();
@@ -1275,6 +1293,8 @@ function paintOverviewWin(){
 const ptrs = new Map();
 let g = null; // gesture state
 function localX(e){ const r = wave.getBoundingClientRect(); return e.clientX - r.left; }
+function localY(e){ const r = wcv.getBoundingClientRect(); return e.clientY - r.top; }
+function freqAtY(y){ const h = wcv.getBoundingClientRect().height, nyq = S.sr/2, t = 1 - clamp(y/h, 0, 1); return SPEC_FMIN*Math.pow(nyq/SPEC_FMIN, t); }
 wave.addEventListener('pointerdown', e=>{
   if(e.target.closest && e.target.closest('button')) return;
   wave.setPointerCapture(e.pointerId);
@@ -1290,7 +1310,7 @@ wave.addEventListener('pointerdown', e=>{
   const s = selOrNull();
   let handle = null;
   if(s){ const xa = xOf(s.a), xb = xOf(s.b); if(Math.abs(x-xa)<22) handle='a'; else if(Math.abs(x-xb)<22) handle='b'; if(handle && Math.abs(x-xa)<22 && Math.abs(x-xb)<22) handle = x<xa? 'a' : x>xb ? 'b' : (x-xa < xb-x ? 'a':'b'); }
-  g = {type: handle? 'handle': S.pan ? 'pan' : 'tap', handle, x0:x, t0:tOf(x), st0:S.start, prevSel: S.sel? {...S.sel}:null, moved:false};
+  g = {type: handle? 'handle': S.pan ? 'pan' : 'tap', handle, x0:x, y0:localY(e), t0:tOf(x), st0:S.start, prevSel: S.sel? {...S.sel}:null, moved:false};
 });
 wave.addEventListener('pointermove', e=>{
   if(!ptrs.has(e.pointerId)) return;
@@ -1305,7 +1325,9 @@ wave.addEventListener('pointermove', e=>{
   const x = localX(e);
   if(g.type==='pan'){ if(Math.abs(x-g.x0)>6) g.moved = true; if(g.moved){ S.start = g.st0 - (x - g.x0)*S.spp; clampView(); draw(); } return; }
   if(g.type==='tap' && Math.abs(x-g.x0)>8){ g.type='select'; }
-  if(g.type==='select'){ g.lastX = x; S.sel = {a:Math.min(g.t0, tOf(x)), b:Math.max(g.t0, tOf(x))}; edgeScroll(); draw(); }
+  if(g.type==='select'){ g.lastX = x; S.sel = {a:Math.min(g.t0, tOf(x)), b:Math.max(g.t0, tOf(x))};
+    if(S.spec){ const y = localY(e); S.fsel = Math.abs(y - g.y0) >= 18 ? {lo:freqAtY(Math.max(y, g.y0)), hi:freqAtY(Math.min(y, g.y0))} : null; }
+    edgeScroll(); draw(); }
   else if(g.type==='handle'){
     g.lastX = x;
     const t = tOf(x);
@@ -1322,11 +1344,11 @@ function endPtr(e){
   if(g.type==='tap' || g.type==='pan'){
     const t = g.t0;
     if(S.breath && toggleBreathAt(t)) { g=null; return; }
-    S.cursor = t; S.sel = null;
+    S.cursor = t; S.sel = null; S.fsel = null;
     if(S.playing){ startPlay(t, 0); }
     draw(); updateButtons();
   } else if(g.type==='select' || g.type==='handle'){
-    if(S.sel && S.sel.b - S.sel.a < 2) S.sel = null;
+    if(S.sel && S.sel.b - S.sel.a < 2){ S.sel = null; S.fsel = null; }
     if(S.sel) S.cursor = S.sel.a;
     updateButtons(); draw();
   }
@@ -2023,6 +2045,8 @@ function onJob(ev){
   switch(ev.op){
     case 'import': { const st = J(AX.state()); if(st && st.open) enterEditor(st); toast('Dosya açıldı'); return; }
     case 'normalize': toast('Normalleştirildi ('+dbs(r.gainDb)+' dB)'); break;
+    case 'spectral': toast('Spektral onarım uygulandı · beğenmezseniz Geri al'); break;
+    case 'loudness': toast(r.unchanged ? 'Zaten hedefte ('+lufsTxt(r.from)+' LUFS)' : (lufsTxt(r.from)+' → '+lufsTxt(r.to)+' LUFS · '+dbs(r.gainDb)+' dB'+(r.limited?' · tepeler sınırlandı':'')+' · gerçek tepe '+lufsTxt(r.tp)+' dBTP'), 4600); break;
     case 'noiseReduce': toast('Gürültü azaltıldı'); break;
     case 'autoNR': toast('Gürültü otomatik azaltıldı ('+r.db+' dB) · ham kayıt için Geri al', 3800); break;
     case 'heal': toast(r.fixed? (r.fixed===1?'Onarıldı':r.fixed+' nokta onarıldı') : 'Onarılacak klik bulunamadı'); break;
@@ -2214,6 +2238,63 @@ function sheetNorm(){
   $('nmOk').onclick = ()=>{ AX.setSettings(JSON.stringify({norm:t})); S.settings.norm=t; const [a,b]=targetRange(); closeSheet(); runJob(AX.normalize(a,b,t)); };
 }
 
+// ---- spectral repair (spot healing) ----
+const khz = f => f>=1000 ? (Math.round(f/100)/10).toFixed(1).replace('.',',')+' kHz' : Math.round(f)+' Hz';
+function sheetSpot(){
+  if(!S.spec){ setSpec(true); toast('Spektrum açıldı: onarmak istediğiniz sesi (ör. ağız sesi) parmağınızla çapraz sürükleyerek kutuya alın, sonra tekrar Spektral onar’a dokunun.', 6000); return; }
+  if(!S.sel){ toast('Spektrumda onarılacak sesi çapraz sürükleyerek kutuya alın.', 4200); return; }
+  const dur = (S.sel.b - S.sel.a)/S.sr;
+  if(dur > 30){ toast('Spektral onarım için en fazla 30 sn seçin'); return; }
+  const band = S.fsel || {lo:20, hi:S.sr/2};
+  const st = S.settings, mode0 = st.spotMode || 'repair', db0 = st.spotDb!=null ? +st.spotDb : -20;
+  openSheet('Spektral onar', `
+    <div class="hint" style="margin-top:0">Seçim: ${String(dur.toFixed(2)).replace('.',',')} sn · ${S.fsel ? khz(band.lo)+' – '+khz(band.hi) : 'tüm frekanslar'}. Kutunun dışındaki sese dokunulmaz.${S.fsel?'':' Yalnızca belirli frekansları seçmek için spektrumda dikey olarak da sürükleyin.'}</div>
+    <div class="choice" id="spList">
+      <button data-v="repair" class="${mode0==='repair'?'on':''}"><b>Onar</b><small>Seçili frekansları hemen önceki ve sonraki sesten yeniden oluşturur. Ağız sesi, tık, kısa gürültüler için.</small></button>
+      <button data-v="attenuate" class="${mode0==='attenuate'?'on':''}"><b>Kıs</b><small>Seçili frekansları belirli miktarda kısar. Daha uzun, istenmeyen bir ses için.</small></button>
+    </div>
+    <div id="spAtt" ${mode0==='attenuate'?'':'hidden'}><div class="row"><label>Miktar</label><span class="v num" id="spDbV"></span></div><input type="range" id="spDb" min="-40" max="-3" step="1" value="${db0}"></div>
+    <div class="btns"><button class="btn pri" id="spOk">Uygula</button></div>`);
+  let mode = mode0;
+  bindRange('spDb', v=>String(v).replace('-','−')+' dB');
+  $('spList').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ mode = b.dataset.v; $('spList').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); $('spAtt').hidden = mode!=='attenuate'; });
+  $('spOk').onclick = ()=>{
+    const db = +$('spDb').value; AX.setSettings(JSON.stringify({spotMode:mode, spotDb:db})); Object.assign(S.settings, {spotMode:mode, spotDb:db});
+    closeSheet(); runJob(AX.spectralRepair(S.sel.a, S.sel.b, band.lo, band.hi, mode, db));
+  };
+}
+
+// ---- loudness (LUFS) ----
+const LOUD_PRESETS = [
+  {id:'pod1', t:-16, c:-1, l:'Podcast · −16 LUFS', d:'Apple Podcasts, Spotify ve çoğu podcast platformu (stereo dinlemede).'},
+  {id:'pod2', t:-19, c:-1, l:'Podcast mono · −19 LUFS', d:'Mono dosyada −16 stereo ile aynı algılanır; mono teslim isteyen yayıncılar için.'},
+  {id:'web', t:-14, c:-1, l:'Akış / sosyal medya · −14 LUFS', d:'YouTube, Instagram, reklam ve tanıtım videoları.'},
+  {id:'ebu', t:-23, c:-1, l:'TV / radyo (EBU R128) · −23 LUFS', d:'Yayın kuruluşlarının çoğu bu standardı ister.'}
+];
+function sheetLoud(){
+  const st = S.settings, cur = st.loudPreset || 'pod1';
+  const custom = st.loudTarget!=null ? +st.loudTarget : -18, ceil = st.loudCeil!=null ? +st.loudCeil : -1;
+  openSheet('Ses yüksekliği (LUFS)', `${targetLabel()}
+    <div class="hint" style="margin-top:0">Kulağın algıladığı ortalama yüksekliği hedefe getirir. Tepe sesler, sınırlayıcıyla seçtiğiniz tavanın altında tutulur. Sesli kitap (ACX) için Seviye › Analiz ve Normalleştir kullanın.</div>
+    <div class="choice" id="ldList">${LOUD_PRESETS.map(p=>`<button data-v="${p.id}" class="${p.id===cur?'on':''}"><b>${p.l}</b><small>${p.d}</small></button>`).join('')}<button data-v="custom" class="${cur==='custom'?'on':''}"><b>Özel hedef</b><small>Müşterinin istediği değer.</small></button></div>
+    <div id="ldCustom" ${cur==='custom'?'':'hidden'}><div class="row"><label>Hedef</label><span class="v num" id="ldTV"></span></div><input type="range" id="ldT" min="-30" max="-10" step="0.5" value="${custom}"></div>
+    <div class="row"><label>Tepe tavanı (gerçek tepe)</label></div>
+    <div class="seg" id="ldCeil">${[-1,-2,-3].map(v=>`<button data-v="${v}" class="${v===ceil?'on':''}">${String(v).replace('-','−')} dBTP</button>`).join('')}</div>
+    <div class="btns"><button class="btn" id="ldMeasure">Önce ölç</button><button class="btn pri" id="ldOk">Uygula</button></div>`);
+  let sel = cur, c = ceil;
+  bindRange('ldT', v=>String(v).replace('-','−').replace('.',',')+' LUFS');
+  $('ldList').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ sel = b.dataset.v; $('ldList').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); $('ldCustom').hidden = sel!=='custom'; });
+  segBind('ldCeil', v=>c=+v);
+  const target = ()=> sel==='custom' ? +$('ldT').value : LOUD_PRESETS.find(p=>p.id===sel).t;
+  $('ldMeasure').onclick = ()=>{ closeSheet(); doAnalyze(); };
+  $('ldOk').onclick = ()=>{
+    const o = {loudPreset:sel, loudCeil:c}; if(sel==='custom') o.loudTarget = +$('ldT').value;
+    AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o);
+    const [a,b] = targetRange(); closeSheet(); runJob(AX.loudness(a, b, target(), c));
+  };
+}
+const lufsTxt = v => v<=-200 ? '—' : String((Math.round(v*10)/10).toFixed(1)).replace('-','−').replace('.',',');
+
 // ---- gain ----
 function sheetGain(){
   openSheet('Gain', `${targetLabel()}
@@ -2238,10 +2319,15 @@ function doAnalyze(){
         <span class="k">Ortalama (RMS)</span><span class="val num">${dbs(r.rms)} dB</span>${mk(r.rms>=-23 && r.rms<=-18)}
         <span class="k">Konuşma RMS</span><span class="val num">${dbs(r.speech)} dB</span>${mk(0,1)}
         <span class="k">Gürültü tabanı</span><span class="val num">${dbs(r.floor)} dB</span>${mk(r.floor<=-60, r.floor<-200)}
+        ${r.lufs!=null ? `<span class="k">Ses yüksekliği</span><span class="val num">${lufsTxt(r.lufs)} LUFS</span>${mk(0,1)}
+        <span class="k">Gerçek tepe</span><span class="val num">${lufsTxt(r.tp)} dBTP</span>${mk(r.tp<=-1, r.tp<-200)}
+        <span class="k">Yükseklik aralığı (LRA)</span><span class="val num">${String((Math.round(r.lra*10)/10).toFixed(1)).replace('.',',')} LU</span>${mk(0,1)}` : ''}
       </div>
       <div class="hint">Yaygın sesli kitap teslim ölçütü: tepe en fazla −3 dB, ortalama −23…−18 dB, gürültü tabanı −60 dB'nin altı. Reklam ve dublaj işlerinde müşterinin istediği değerleri esas alın.${r.digital?'<br><br>Kayıtta tamamen dijital sessiz bölümler var; bazı platformlar oda sesi tercih eder.':''}</div>
-      <div class="btns"><button class="btn" id="anNorm">Normalleştir…</button><button class="btn pri" id="anOk">Tamam</button></div>`);
+      ${r.lufs!=null ? '<div class="hint">LUFS hedefleri: podcast −16 (mono −19), akış −14, TV/radyo −23. Gerçek tepe, dijital tepeler arasındaki aşımı da içerir; en fazla −1 dBTP önerilir.</div>' : ''}
+      <div class="btns"><button class="btn" id="anNorm">Normalleştir…</button>${r.lufs!=null?'<button class="btn" id="anLoud">LUFS eşitle…</button>':''}<button class="btn pri" id="anOk">Tamam</button></div>`);
     $('anOk').onclick = closeSheet; $('anNorm').onclick = ()=>{ closeSheet(); setTimeout(sheetNorm, 250); };
+    if($('anLoud')) $('anLoud').onclick = ()=>{ closeSheet(); setTimeout(sheetLoud, 250); };
   });
 }
 
@@ -2388,6 +2474,7 @@ function openSettings(){
     <div class="set-row"><label>Hedef tepe aralığı<small>Dalga formunda, cetvelde ve kayıt ölçerinde sarı bantla gösterilir.</small></label><select class="field" id="sBand">${opt('off','Kapalı',st.band)}${opt('-12,-6','−12 … −6 dB',st.band)}${opt('-9,-6','−9 … −6 dB',st.band||'-9,-6')}${opt('-6,-3','−6 … −3 dB',st.band)}</select></div>
     <div class="set-row"><label>Geri sayım<small>Kayıt başlamadan önce.</small></label><select class="field" id="sCd">${opt(0,'Yok',st.countdown)}${opt(3,'3 sn',st.countdown)}${opt(5,'5 sn',st.countdown)}</select></div>
     <div class="set-row"><label>Düzeltme kaydında ön dinleme<small>Kayda girmeden önce çalınacak süre.</small></label><select class="field" id="sPre">${[1,2,3,4,5].map(v=>opt(v,v+' sn',st.preroll)).join('')}</select></div>
+    <div class="set-row"><label>Düzeltme kaydı hizalaması<small id="sLatInfo">${latInfo(st)}</small></label><button class="btn" id="sLat">Ölç</button></div>
     <div class="set-sec">Gürültü</div>
     <div class="set-row"><label>Kayıttan önce ortam sesi<small>Kayda basınca 3 sn sessiz durursunuz. Oda sesi ölçülür ve gürültü örneği olarak saklanır; kayda eklenmez.</small></label><select class="field" id="sRoom">${opt('off','Kapalı',st.room)}${opt('first','Projede ilk kayıtta',st.room)}${opt('each','Her kayıttan önce',st.room)}</select></div>
     <div class="set-row"><label>Kayıttan sonra otomatik temizle<small>Her yeni kayda gürültü azaltma uygulanır. Ham kayıt kaybolmaz: Geri al ile dönülür.</small></label>${sw('sAuto', !!st.autoNr)}</div>
@@ -2406,6 +2493,13 @@ function openSettings(){
   $('sDev').onchange = e=>save({dev:+e.target.value});
   $('sCd').onchange = e=>save({countdown:+e.target.value});
   $('sPre').onchange = e=>save({preroll:+e.target.value});
+  $('sLat').onclick = ()=>{
+    if(S.busy) return;
+    confirmDialog('Gecikme ölçülsün mü?', 'Telefonun sesini orta seviyeye açın ve kulaklık takılıysa çıkarın. Hoparlörden 5 kısa “tık” çalınıp mikrofondan dinlenecek; sessiz bir yerde 3 saniye konuşmadan bekleyin.', 'Ölç', ()=>{
+      const go = ()=>{ const r = J(AX.latencyTest()); if(r && r.ok === false){ toast(r.error||'Ölçülemedi'); return; } $('sLat').disabled = true; $('sLat').textContent = 'Ölçülüyor…'; };
+      if(!AX.hasMic()){ S.permCb = ok=>{ if(ok) go(); else toast('Mikrofon izni gerekli'); }; AX.askMic(); } else go();
+    });
+  };
   $('sOr').onchange = e=>save({orient:e.target.value});
   $('sRoom').onchange = e=>save({room:e.target.value});
   $('sPrep').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({prep:on}); };
@@ -2420,8 +2514,21 @@ function openSettings(){
 // =====================================================================================
 // native events
 // =====================================================================================
+function latInfo(st){
+  const fix = +st.latMs || 0;
+  return 'Ön dinleme ile yeni kaydın aynı ana oturması için hoparlör ve mikrofon gecikmesi telafi edilir. '
+    + (st.latMeasured ? 'Son ölçüm: '+String(st.latMeasured).replace('.',',')+' ms gecikme, '+(Math.abs(fix) < 0.05 ? 'ek düzeltme gerekmedi.' : 'ek düzeltme '+(fix>0?'+':'')+String(fix).replace('.',',')+' ms.') : 'Henüz ölçülmedi; cihazın bildirdiği gecikme kullanılıyor.');
+}
+function onLat(d){
+  const b = $('sLat'); if(b){ b.disabled = false; b.textContent = 'Ölç'; }
+  if(!d.ok){ toast(d.error || 'Ölçülemedi', 5000); return; }
+  const o = {latMs:d.fix, latMeasured:d.total}; AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o);
+  if($('sLatInfo')) $('sLatInfo').textContent = latInfo(S.settings);
+  toast('Gecikme '+String(d.total).replace('.',',')+' ms · '+(Math.abs(d.residual) < 1.5 ? 'hizalama zaten doğruydu' : 'düzeltme kaydedildi ('+(d.residual>0?'+':'')+String(d.residual).replace('.',',')+' ms)')+'. Tekrar ölçünce sapma ~0 çıkmalı.', 5200);
+}
 window.AXev = function(type, d){
   try{
+    if(type==='lat') onLat(d); else
     if(type==='job') onJob(d);
     else if(type==='play'){ if(d.end){ S.playing=false; S.ppos=-1; setPlayIcon(); abUpd(false); draw(); } }
     else if(type==='rec') recFinished(d);

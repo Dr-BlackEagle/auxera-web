@@ -455,7 +455,7 @@ function levelAt(e, pos){
 // =====================================================================================
 // recording
 // =====================================================================================
-const WORKLET = `class Cap extends AudioWorkletProcessor{process(i){const c=i[0];if(c&&c.length){const a=c[0];let o;if(c.length>1){o=new Float32Array(a.length);for(let k=0;k<c.length;k++){const x=c[k];for(let j=0;j<a.length;j++)o[j]+=x[j]/c.length;}}else o=a.slice(0);this.port.postMessage(o,[o.buffer]);}return true;}}registerProcessor('cap',Cap);`;
+const WORKLET = `class Cap extends AudioWorkletProcessor{process(i){const c=i[0];if(c&&c.length){const a=c[0];let o;if(c.length>1){o=new Float32Array(a.length);for(let k=0;k<c.length;k++){const x=c[k];for(let j=0;j<a.length;j++)o[j]+=x[j]/c.length;}}else o=a.slice(0);this.port.postMessage({d:o,f:currentFrame},[o.buffer]);}return true;}}registerProcessor('cap',Cap);`;
 const MIC = {stream:null, node:null, srcNode:null, sink:null, granted:false, devs:[], key:''};
 let workletReady = null;
 function biquadHP(f0, sr){ const w = 2*Math.PI*f0/sr, cs = Math.cos(w), al = Math.sin(w)/(2*Math.SQRT1_2), a0 = 1 + al;
@@ -482,10 +482,10 @@ async function openMic(){
     if(!workletReady) workletReady = c.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], {type:'application/javascript'})));
     await workletReady;
     MIC.node = new AudioWorkletNode(c, 'cap', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1]});
-    MIC.node.port.onmessage = e => onMic(e.data);
+    MIC.node.port.onmessage = e => onMic(e.data.d, e.data.f);
   } else {
     MIC.node = c.createScriptProcessor(2048, 1, 1);
-    MIC.node.onaudioprocess = e => onMic(new Float32Array(e.inputBuffer.getChannelData(0)));
+    MIC.node.onaudioprocess = e => onMic(new Float32Array(e.inputBuffer.getChannelData(0)), Math.round((e.playbackTime || c.currentTime) * c.sampleRate));
   }
   MIC.sink = c.createGain(); MIC.sink.gain.value = 0;
   MIC.srcNode.connect(MIC.node); MIC.node.connect(MIC.sink); MIC.sink.connect(c.destination);
@@ -503,9 +503,24 @@ async function keepAwake(on){
   try { if(on && navigator.wakeLock && !wake){ wake = await navigator.wakeLock.request('screen'); } else if(!on && wake){ wake.release(); wake = null; } } catch(e){ wake = null; }
 }
 
-function onMic(f){
+function latEstimate(){
+  // output (scheduled -> audible) + input (sound -> worklet) latency the browser reports, in seconds
+  const c = actx; let t = c ? (c.outputLatency || c.baseLatency || 0) : 0;
+  try { const st = MIC.stream && MIC.stream.getAudioTracks()[0].getSettings(); if(st && st.latency) t += st.latency; } catch(e){}
+  return t;
+}
+/** context frame at which the take must start so it lines up with what the listener heard at output time tOut */
+function alignFrameFor(tOut){ return Math.round((tOut + latEstimate() + (+settings.latMs || 0) / 1000) * actx.sampleRate); }
+function onMic(f, frame){
+  if(cal){ calInput(f, frame); return; }
   const r = rec; if(!r || r.done) return;
   const c = actx, p = cur;
+  if(r.alignFrame != null && !r.testing){
+    // punch-in: drop everything captured before the aligned start (counted on the audio clock)
+    if(frame + f.length <= r.alignFrame){ meterOnly(r, f); return; }
+    if(frame < r.alignFrame){ f = f.slice(r.alignFrame - frame); }
+    r.alignFrame = null;
+  }
   // resample to the project rate if the context runs at another rate (linear, phase-continuous)
   if(c.sampleRate !== p.sr){
     const ratio = c.sampleRate / p.sr, out = []; let ph = r.rph || 0, last = r.rlast || 0;
@@ -546,6 +561,7 @@ function finishRoom(r, sr){
   try { r.roomProfile = D.noiseProfile({read:(pos, o, off, n) => { for(let i = 0; i < n; i++){ const x = pos + i; o[off + i] = x >= 0 && x < b.length ? b[x] : 0; } }}, a0, b.length, sr); } catch(e){}
   r.roomDone = true; r.roomBuf = null;
 }
+function meterOnly(r, f){ let pk = 0, s = 0; for(let i = 0; i < f.length; i++){ const v = Math.abs(f[i] * r.gainLin); if(v > pk) pk = v; s += v * v; } r.level = pk; r.rms = Math.sqrt(s / Math.max(1, f.length)); r.started = true; }
 function recStartImpl(mode, aD, bD, test){
   const p = cur;
   if(!p) return err('Proje açık değil');
@@ -561,7 +577,7 @@ function recStartImpl(mode, aD, bD, test){
   const s = p.newSource();
   p.recSrc = s.id; p.recA = a; p.recB = punch ? (b < 0 ? len : b) : a;
   const r = rec = {src:s, punch, insA:a, insB:p.recB, pre, discard:pre, testing:!!test, started:false, paused:false, clipped:false,
-    level:0, rms:0, gainLin:undb(+settings.inGain || 0), curGain:undb(+settings.inGain || 0), lowCut: settings.lowCut !== false,
+    level:0, rms:0, alignFrame: pre > 0 ? Infinity : null, gainLin:undb(+settings.inGain || 0), curGain:undb(+settings.inGain || 0), lowCut: settings.lowCut !== false,
     hp1:biquadHP(80, p.sr), hp2:biquadHP(80, p.sr), lastFlush:performance.now(), error:null, done:false,
     roomLen:0, roomSkip:0, roomFill:0, roomBuf:null, roomDone:false, roomDb:-999, roomProfile:null};
   const room = settings.room || 'off';
@@ -571,7 +587,7 @@ function recStartImpl(mode, aD, bD, test){
   ctx();
   openMic().then(() => {
     if(rec !== r) return;
-    if(pre > 0){ player = new Player(p.edl(), p.sr, a - pre, a, null); player.start(); }
+    if(pre > 0){ player = new Player(p.edl(), p.sr, a - pre, a, null); player.start(); r.alignFrame = alignFrameFor(player.t0 + pre / p.sr); r.discard = 0; }
   }).catch(e => {
     if(rec !== r) return;
     r.error = (e && e.name === 'NotAllowedError') ? 'Mikrofon izni verilmedi' : ('Mikrofon açılamadı: ' + (e && e.message || e));
@@ -608,6 +624,28 @@ function snap(p, pos){
   let best = -1;
   for(let d = 0; d <= W && best < 0; d++) for(const sg of [-1, 1]){ const i = W + sg * d; if(i <= 0 || i >= b.length) continue; if((b[i-1] <= 0 && b[i] >= 0) || (b[i-1] >= 0 && b[i] <= 0)){ best = i; break; } }
   return best < 0 ? pos : Math.max(0, Math.min(e.total, pos - W + best));
+}
+
+// latency calibration: a punch-in whose "pre-roll" is a click track played through the speaker
+let cal = null;
+function calInput(f, frame){
+  const k = cal; if(!k || k.done) return;
+  if(k.alignFrame == null) return;
+  if(frame + f.length <= k.alignFrame) return;
+  if(frame < k.alignFrame) f = f.subarray(k.alignFrame - frame);
+  const n = Math.min(f.length, k.buf.length - k.n); k.buf.set(f.subarray(0, n), k.n); k.n += n;
+  if(k.n >= k.buf.length) calFinish(k);
+}
+function calFinish(k, error){
+  if(k.done) return; k.done = true; cal = null; clearTimeout(k.timer);
+  stopPlay(); if(!rec) closeMic();
+  if(error){ emit('lat', {ok:false, error}); return; }
+  const off = D.latencyMeasure(k.buf, k.n, k.sr, k.expect);
+  if(isNaN(off)){ emit('lat', {ok:false, error:'Test sesleri duyulamadı. Telefonun sesini açın, kulaklığı çıkarın ve sessiz bir yerde tekrar deneyin.'}); return; }
+  const fix = Math.max(-200, Math.min(800, (+settings.latMs || 0) + off));
+  settings.latMs = Math.round(fix * 10) / 10; saveSettings();
+  const auto = Math.round(k.est * 10000) / 10;
+  emit('lat', {ok:true, residual: Math.round(off * 10) / 10, fix: settings.latMs, auto, timestamps:false, total: Math.round((auto + settings.latMs) * 10) / 10});
 }
 
 // keys during recording: Bluetooth pedal / keyboard (volume keys are not available to web pages)
@@ -838,7 +876,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.2.1",
+  version: () => "web 0.3",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();
@@ -959,7 +997,7 @@ const AX = window.AX = {
   recState: () => {
     const r = rec; if(!r) return J({on:false});
     const free = Math.max(0, (storageEst.quota || 0) - (storageEst.usage || 0));
-    return J({on:true, t:r.src.len, lvl:r.level, rms:r.rms, clip:r.clipped, paused:r.paused, pre:r.discard > 0, started:r.started,
+    return J({on:true, t:r.src.len, lvl:r.level, rms:r.rms, clip:r.clipped, paused:r.paused, pre:r.discard > 0 || r.alignFrame != null, started:r.started,
       blocks:r.src.nBlocks, srcMode: settings.src === 'voice' ? 'voice' : 'unprocessed', ext:false, fmt:'32-bit float',
       room: r.roomLen > 0 && !r.roomDone, roomLen:r.roomLen, roomPos:r.roomFill, test:r.testing, roomDb: r.roomDone ? r.roomDb : -999, free: free || 5e9, bytesPerSec: cur.sr * 4, low:false});
   },
@@ -1059,7 +1097,7 @@ const AX = window.AX = {
       for(let i0 = 0; i0 < nf; i0 += 4096){
         const m = Math.min(4096, nf - i0), cnt = Math.min(m * H, n - i0 * H); ed.read(r[0] + i0 * H, buf, 0, cnt);
         for(let i = 0; i < m; i++){ const o = i * H, c = Math.min(H, cnt - o); let s = 0; for(let k = 0; k < c; k++){ const x = buf[o + k], ax = Math.abs(x); if(ax > pk) pk = ax; s += x * x; } sum += s; e[i0 + i] = s / Math.max(1, c); }
-        await prog(i0 / nf);
+        await prog(0.5 * i0 / nf);
       }
       const L = {peak: db(pk), rms: 10 * Math.log10(sum / n + 1e-24), floor:-240, speech:-240, digital:false, a:r[0], b:r[1]};
       const win = Math.min(50, nf); let best = 1e30, ws = 0, zeros = 0;
@@ -1069,6 +1107,9 @@ const AX = window.AX = {
       const srt = Float32Array.from(e).sort(), ref = srt[Math.min(nf - 1, Math.floor(nf * 0.95))], cutv = ref * 1e-3; let ss = 0, cn = 0;
       for(const v of e) if(v > cutv){ ss += v; cn++; }
       L.speech = cn ? 10 * Math.log10(ss / cn + 1e-24) : -240;
+      const U = await D.loudness(cur.edl(), r[0], r[1], cur.sr, 1, f => prog(0.5 + 0.5 * f));
+      const fin = v => isFinite(v) ? v : -240;
+      Object.assign(L, {lufs: fin(U.integrated), lra: U.lra, mMax: fin(U.momentaryMax), sMax: fin(U.shortMax), tp: U.truePeak});
       return L;
     }); },
   noiseProfile: (a, b) => { if(!cur) return err('Proje açık değil'); const r = range(a, b);
@@ -1220,6 +1261,55 @@ const AX = window.AX = {
     return J({ok:true, a, b:pos});
   },
   // ---- storage ----
+  spectralRepair: (aD, bD, f0, f1, mode, dbv) => {
+    if(!cur) return err('Proje açık değil');
+    const r = range(aD, bD), sr = cur.sr;
+    if(r[1] <= r[0]) return err('Spektrumda onarılacak bölgeyi seçin');
+    if(r[1] - r[0] > 30 * sr) return err('Spektral onarım için en fazla 30 sn seçin');
+    const N = D.nrSize(sr), len = cur.length(), ra = Math.max(0, r[0] - N), rb = Math.min(len, r[1] + N), att = mode === 'attenuate';
+    return startJob('spectral', 'Spektral onarım', async () => {
+      await replaceProcessed(att ? 'Spektral kıs ' + Math.round(dbv) + ' dB' : 'Spektral onar', ra, rb, N, async (e, A, B, out) => {
+        await prog(0.1);
+        D.spectralRepair(e, A, B, r[0], r[1], sr, Math.max(20, Math.min(f0, f1)), Math.min(sr / 2, Math.max(f0, f1)), att, dbv, (bb, o, n) => out.append(bb, o, n), null);
+      });
+      return {a:r[0], b:r[1]};
+    });
+  },
+  loudness: (a, b, target, ceilDb) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b), sr = cur.sr;
+    return startJob('loudness', 'Ses yüksekliği eşitleniyor', async () => {
+      const U = await D.loudness(cur.edl(), r[0], r[1], sr, 1, f => prog(0.35 * f));
+      if(!isFinite(U.integrated)) throw new Error('Ölçülecek kadar ses yok (en az 0,4 sn konuşma gerekli)');
+      let gd = target - U.integrated; const ceil = undb(ceilDb - 0.3), limit = U.truePeak + gd > ceilDb - 0.3;
+      if(limit) for(let it = 0; it < 3; it++){
+        // limiting lowers loudness: measure the limited result (nothing written) and correct the gain
+        const m = new D.LoudMeter(sr);
+        await D.gainLimit(cur.edl(), r[0], r[1], sr, undb(gd), ceil, (bb, o, n) => m.push(bb, o, n), f => prog(0.35 + 0.15 * (it + f)));
+        const got = m.result().integrated; if(!isFinite(got) || Math.abs(target - got) < 0.15) break;
+        gd = Math.min(gd + (target - got), gd + 6);
+      }
+      const gainDb = gd, g = undb(gainDb);
+      const label = ('Ses yüksekliği ' + target.toFixed(1) + ' LUFS').replace('.', ',');
+      if(Math.abs(gainDb) < 0.05 && !limit) return {from:U.integrated, to:U.integrated, gainDb:0, limited:false, tp:U.truePeak, unchanged:true};
+      if(!limit){ cur.commit(label, cur.withRegions([r], g)); cur.saveSoon(); }
+      else await replaceProcessed(label, r[0], r[1], 0, async (e, A, B, out) => { await D.gainLimit(e, A, B, sr, g, ceil, (bb, o, n) => out.append(bb, o, n), f => prog(0.8 + 0.15 * f)); });
+      const V = await D.loudness(cur.edl(), r[0], r[1], sr, 1, f => prog(0.9 + 0.1 * f));
+      return {from:U.integrated, to: isFinite(V.integrated) ? V.integrated : -240, gainDb, limited:limit, tp:V.truePeak};
+    }); },
+  latencyTest: () => {
+    if(rec || cal) return err('Kayıt sürerken ölçülemez');
+    if(busy) return err('Bir işlem sürüyor');
+    stopPlay();
+    const c = ctx(), sr = c.sampleRate, pre = sr, sig = D.latencySignal(sr, pre), expect = D.latencyClicks(sr);
+    const k = cal = {sr, expect, buf: new Float32Array(Math.floor(expect[expect.length - 1] + 1.3 * sr)), n:0, alignFrame:null, done:false, est:0};
+    openMic().then(() => {
+      if(cal !== k) return;
+      const rd = {read:(pos, o, off, n) => { for(let i = 0; i < n; i++){ const x = pos + i; o[off + i] = x >= 0 && x < sig.length ? sig[x] : 0; } }};
+      player = new Player(rd, sr, 0, sig.length, null); player.start();
+      k.est = latEstimate(); k.alignFrame = alignFrameFor(player.t0 + pre / sr);
+      k.timer = setTimeout(() => calFinish(k), (sig.length / sr + 2.5) * 1000);
+    }).catch(e => calFinish(k, (e && e.name === 'NotAllowedError') ? 'Mikrofon izni verilmedi' : 'Mikrofon açılamadı'));
+    return J({ok:true});
+  },
   storage: () => {
     refreshStorage();
     const o = {free: Math.max(0, (storageEst.quota || 0) - (storageEst.usage || 0)), used: storageEst.usage || 0};
