@@ -955,7 +955,7 @@ const TOOL_HELP = {
   del:'Seçimi siler; kenarlar tık olmasın diye yumuşak birleşir.', crop:'Seçim dışında kalan her şeyi siler.', mute:'Seçimi sessizleştirir; süre değişmez.',
   gap:'İmlece belirli uzunlukta sessizlik ekler.', script:'Teleprompter metni: kayıt ekranında cümle cümle akar.',
   noise:'Sabit arka plan gürültüsünü (fan, klima, hışırtı) azaltır. Önce sessiz bir bölümden örnek alır.',
-  breath:'Nefesleri bulur; tek tek seçip kısar ya da susturursunuz.', heal:'Seçili küçük bölümdeki tık ve çıtırtıyı çevresinden onarır.',
+  breath:'Nefesleri bulur; tek tek seçip kısar ya da susturursunuz.', heal:'Seçilen bölümü çevresindeki sese göre yeniden oluşturur (Audition’daki Otomatik Onar gibi).',
   click:'Ağız şapırtısı ve dijital tıkları otomatik bulup onarır.', hum:'Şebeke uğultusunu (50/60 Hz) ve 80 Hz altı gürlemeyi siler.',
   shrink:'Cümle aralarındaki uzun sessizlikleri kısaltır.', norm:'En yüksek tepeyi hedef seviyeye (ör. −3 dB) getirir.',
   gain:'Sesi belirli dB kadar yükseltir ya da alçaltır.', fin:'Seçimin başını sessizlikten yumuşakça açar.', fout:'Seçimin sonunu yumuşakça kapatır.',
@@ -2049,7 +2049,7 @@ function onJob(ev){
     case 'loudness': toast(r.unchanged ? 'Zaten hedefte ('+lufsTxt(r.from)+' LUFS)' : (lufsTxt(r.from)+' → '+lufsTxt(r.to)+' LUFS · '+dbs(r.gainDb)+' dB'+(r.limited?' · tepeler sınırlandı':'')+' · gerçek tepe '+lufsTxt(r.tp)+' dBTP'), 4600); break;
     case 'noiseReduce': toast('Gürültü azaltıldı'); break;
     case 'autoNR': toast('Gürültü otomatik azaltıldı ('+r.db+' dB) · ham kayıt için Geri al', 3800); break;
-    case 'heal': toast(r.fixed? (r.fixed===1?'Onarıldı':r.fixed+' nokta onarıldı') : 'Onarılacak klik bulunamadı'); break;
+    case 'heal': toast('Seçim onarıldı'); break;
     case 'declick': toast(r.fixed? r.fixed+' klik/ağız sesi temizlendi' : 'Belirgin klik bulunamadı'); break;
     case 'fade': toast('Uygulandı'); break;
     case 'dehum': toast('Uğultu/gürleme temizlendi · önceki hali için Geri al'); break;
@@ -2155,10 +2155,12 @@ function toggleBreathAt(t){
 function doHeal(){
   const s = selOrNull();
   if(!s){
-    openSheet('Onar', `<div class="hint">Klik, pıtırtı, ağız şapırtısı veya kısa bir parazit duyduğunuz yeri yakınlaştırın ve <b>sadece o küçük bölümü</b> seçin, sonra Onar'a basın.<br><br>Çok kısa seçimler (≈40 ms'ye kadar) çevresindeki sese göre yeniden oluşturulur; daha uzun seçimlerde içindeki klikler bulunup onarılır.</div><div class="btns"><button class="btn pri" id="hOk">Anladım</button></div>`);
+    openSheet('Onar', `<div class="hint">Bozuk yeri (klik, pıt, öksürük, çarpma, kısa parazit) <b>seçin</b> ve Onar'a basın: seçilen bölüm çevresindeki sese bakılarak yeniden oluşturulur.<br><br>Spektrum açıkken bir kutu çizerseniz yalnızca o frekans bandı onarılır.</div><div class="btns"><button class="btn pri" id="hOk">Anladım</button></div>`);
     $('hOk').onclick = closeSheet; return;
   }
-  runJob(AX.heal(s.a, s.b));
+  stopPlay();
+  if(S.spec && S.fsel) runJob(AX.spectralRepair(s.a, s.b, S.fsel.lo, S.fsel.hi, 'repair', 0));
+  else runJob(AX.heal(s.a, s.b));
 }
 
 // ---- click ----

@@ -876,7 +876,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.3",
+  version: () => "web 0.3.5",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();
@@ -1146,19 +1146,35 @@ const AX = window.AX = {
     return done({count:l.length});
   },
   heal: (a, b) => {
+    // Auto heal: the selection itself is rebuilt from the sound around it (AR fill up to 100 ms, else full-band spectral repair)
     if(!cur) return err('Proje açık değil');
     const r = range(a, b), sr = cur.sr;
-    if(r[1] <= r[0]) return err('Önce onarılacak küçük bir bölümü seçin');
-    if(r[1] - r[0] > 30 * sr) return err("Onarım için en fazla 30 sn seçin (tüm kayıt için Klik Temizle'yi kullanın)");
+    if(r[1] <= r[0]) return err('Önce onarılacak bölümü seçin');
+    if(r[1] - r[0] > 30 * sr) return err('Onarım için en fazla 30 sn seçin');
+    const shortGap = r[1] - r[0] <= Math.floor(0.1 * sr);
     return startJob('heal', 'Onarılıyor', async () => {
-      let fixed = 0; const gapMax = Math.floor(0.045 * sr);
-      await replaceProcessed('Onar', r[0], r[1], Math.floor(sr / 10), async (e, A, B, out) => {
-        const n = B - A, x = new Float32Array(n); e.read(A, x, 0, n); await prog(0.2);
+      if(shortGap){
+        await replaceProcessed('Onar', r[0], r[1], Math.floor(sr / 10), async (e, A, B, out) => {
+          const n = B - A, x = new Float32Array(n); e.read(A, x, 0, n); await prog(0.2);
+          D.healGap(x, r[0] - A, r[1] - A, Math.max(32, Math.round(sr / 94))); out.append(x, 0, n);
+        });
+        return {fixed:1, mode:'ar'};
+      }
+      const N = D.nrSize(sr), f = Math.max(1, Math.floor(sr / 200)), len = cur.length();
+      const ra = Math.max(0, r[0] - f), rb = Math.min(len, r[1] + f);
+      await replaceProcessed('Onar', ra, rb, N, async (e, A, B, out) => {
+        await prog(0.1);
+        const n = B - A, y = new Float32Array(n); let wp = 0;
+        D.spectralRepair(e, A, B, r[0], r[1], sr, 20, sr / 2, false, 0, (bb, o, k) => { const c = Math.min(k, n - wp); if(c > 0) y.set(bb.subarray(o, o + c), wp); wp += k; }, null);
+        const x = new Float32Array(n); e.read(A, x, 0, n);
         const g0 = r[0] - A, g1 = r[1] - A;
-        if(r[1] - r[0] <= gapMax){ D.healGap(x, g0, g1, 32); fixed = 1; } else fixed = D.declick(x, g0, g1, sr, 0.7);
+        for(let i = Math.max(0, g0 - f); i < Math.min(n, g1 + f); i++){
+          const t = i < g0 ? (i - (g0 - f) + 0.5) / f : i >= g1 ? (g1 + f - i - 0.5) / f : 1, wv = 0.5 - 0.5 * Math.cos(Math.PI * t);
+          x[i] = x[i] * (1 - wv) + y[i] * wv;
+        }
         out.append(x, 0, n);
       });
-      return {fixed};
+      return {fixed:1, mode:'spectral'};
     });
   },
   declick: (a, b, sens) => { if(!cur) return err('Proje açık değil'); const r = fullIfEmpty(a, b), sr = cur.sr;
