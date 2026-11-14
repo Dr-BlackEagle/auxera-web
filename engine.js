@@ -505,7 +505,7 @@ async function keepAwake(on){
 
 function latEstimate(){
   // output (scheduled -> audible) + input (sound -> worklet) latency the browser reports, in seconds
-  const c = actx; let t = c ? (c.outputLatency || c.baseLatency || 0) : 0;
+  const c = actx; let t = c ? (c.baseLatency || 0) + (c.outputLatency || 0) : 0;
   try { const st = MIC.stream && MIC.stream.getAudioTracks()[0].getSettings(); if(st && st.latency) t += st.latency; } catch(e){}
   return t;
 }
@@ -643,9 +643,16 @@ function calFinish(k, error){
   const off = D.latencyMeasure(k.buf, k.n, k.sr, k.expect);
   if(isNaN(off)){ emit('lat', {ok:false, error:'Test sesleri duyulamadı. Telefonun sesini açın, kulaklığı çıkarın ve sessiz bir yerde tekrar deneyin.'}); return; }
   const fix = Math.max(-200, Math.min(800, (+settings.latMs || 0) + off));
-  settings.latMs = Math.round(fix * 10) / 10; saveSettings();
+  settings.latMs = Math.round(fix * 1000) / 1000;
   const auto = Math.round(k.est * 10000) / 10;
-  emit('lat', {ok:true, residual: Math.round(off * 10) / 10, fix: settings.latMs, auto, timestamps:false, total: Math.round((auto + settings.latMs) * 10) / 10});
+  // round trip as reported by the browser (output + input) plus what that report missed (the residual)
+  const c = actx, outMs = c ? ((c.baseLatency || 0) + (c.outputLatency || 0)) * 1000 : 0;
+  let inMs = 0; try { const st = MIC.stream && MIC.stream.getAudioTracks()[0].getSettings(); if(st && st.latency) inMs = st.latency * 1000; } catch(e){}
+  const rtt = Math.round((outMs + inMs + off) * 10) / 10;
+  settings.latMeasured = Math.round((auto + settings.latMs) * 10) / 10; settings.rtt = rtt;
+  settings.latEngine = 'Web Audio · ' + (c ? c.sampleRate : 0) + ' Hz'; saveSettings();
+  emit('lat', {ok:true, residual: Math.round(off * 100) / 100, fix: settings.latMs, key:'latMs', sfx:'', auto, timestamps:false, total: settings.latMeasured,
+    out: Math.round(outMs * 10) / 10, in: Math.round(inMs * 10) / 10, rtt, engineOut: settings.latEngine, engineIn: settings.latEngine, aa:false});
 }
 
 // keys during recording: Bluetooth pedal / keyboard (volume keys are not available to web pages)
@@ -876,7 +883,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.3.6",
+  version: () => "web 0.4.0",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();

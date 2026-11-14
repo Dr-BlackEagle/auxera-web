@@ -2476,6 +2476,8 @@ function openSettings(){
     <div class="set-row"><label>Hedef tepe aralığı<small>Dalga formunda, cetvelde ve kayıt ölçerinde sarı bantla gösterilir.</small></label><select class="field" id="sBand">${opt('off','Kapalı',st.band)}${opt('-12,-6','−12 … −6 dB',st.band)}${opt('-9,-6','−9 … −6 dB',st.band||'-9,-6')}${opt('-6,-3','−6 … −3 dB',st.band)}</select></div>
     <div class="set-row"><label>Geri sayım<small>Kayıt başlamadan önce.</small></label><select class="field" id="sCd">${opt(0,'Yok',st.countdown)}${opt(3,'3 sn',st.countdown)}${opt(5,'5 sn',st.countdown)}</select></div>
     <div class="set-row"><label>Düzeltme kaydında ön dinleme<small>Kayda girmeden önce çalınacak süre.</small></label><select class="field" id="sPre">${[1,2,3,4,5].map(v=>opt(v,v+' sn',st.preroll)).join('')}</select></div>
+    ${st.aaAvail ? `<div class="set-row"><label>Ses motoru<small>AAudio: Android'in düşük gecikmeli yolu (kayıt ve çalma). Sorun yaşarsanız Klasik'e dönün. Her motorun gecikmesi ayrı ölçülür.</small></label><select class="field" id="sEng">${opt('aaudio','AAudio (düşük gecikme)',st.engine||'aaudio')}${opt('classic','Klasik',st.engine)}</select></div>
+    <div class="set-row"><label>Özel (exclusive) mod<small>Ses donanımını yalnızca Auxera kullanır; gecikme en düşük olur. Kayıt/çalma sırasında diğer uygulamaların sesi duyulmayabilir.</small></label>${sw('sExc', st.exclusive!==false)}</div>` : ''}
     <div class="set-row"><label>Düzeltme kaydı hizalaması<small id="sLatInfo">${latInfo(st)}</small></label><button class="btn" id="sLat">Ölç</button></div>
     <div class="set-sec">Gürültü</div>
     <div class="set-row"><label>Kayıttan önce ortam sesi<small>Kayda basınca 3 sn sessiz durursunuz. Oda sesi ölçülür ve gürültü örneği olarak saklanır; kayda eklenmez.</small></label><select class="field" id="sRoom">${opt('off','Kapalı',st.room)}${opt('first','Projede ilk kayıtta',st.room)}${opt('each','Her kayıttan önce',st.room)}</select></div>
@@ -2502,6 +2504,8 @@ function openSettings(){
       if(!AX.hasMic()){ S.permCb = ok=>{ if(ok) go(); else toast('Mikrofon izni gerekli'); }; AX.askMic(); } else go();
     });
   };
+  if($('sEng')) $('sEng').onchange = e=>{ save({engine:e.target.value}); loadSettings(); $('sLatInfo').textContent = latInfo(S.settings); };
+  if($('sExc')) $('sExc').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({exclusive:on}); };
   $('sOr').onchange = e=>save({orient:e.target.value});
   $('sRoom').onchange = e=>save({room:e.target.value});
   $('sPrep').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({prep:on}); };
@@ -2517,16 +2521,24 @@ function openSettings(){
 // native events
 // =====================================================================================
 function latInfo(st){
-  const fix = +st.latMs || 0;
-  return 'Ön dinleme ile yeni kaydın aynı ana oturması için hoparlör ve mikrofon gecikmesi telafi edilir. '
-    + (st.latMeasured ? 'Son ölçüm: '+String(st.latMeasured).replace('.',',')+' ms gecikme, '+(Math.abs(fix) < 0.05 ? 'ek düzeltme gerekmedi.' : 'ek düzeltme '+(fix>0?'+':'')+String(fix).replace('.',',')+' ms.') : 'Henüz ölçülmedi; cihazın bildirdiği gecikme kullanılıyor.');
+  const sfx = st.aaOn ? 'A' : '', fix = +st['latMs'+sfx] || 0, n = v=>String(v).replace('.',',');
+  const meas = st['latMeasured'+sfx], rtt = st['rtt'+sfx];
+  let t = 'Ön dinleme ile yeni kaydın aynı ana oturması için hoparlör ve mikrofon gecikmesi örnek hassasiyetinde telafi edilir. ';
+  if(meas == null) t += 'Bu ses motoruyla henüz ölçülmedi; cihazın bildirdiği gecikme kullanılıyor.';
+  else t += (rtt != null && rtt >= 0 ? 'Gidiş-dönüş gecikmesi '+n(rtt)+' ms. ' : '') + (Math.abs(fix) < 0.05 ? 'Ek düzeltme gerekmedi.' : 'Ek düzeltme '+(fix>0?'+':'')+n(fix)+' ms.');
+  if(st.aaAvail && st.rttA != null && st.rtt != null) t += ' Karşılaştırma: AAudio '+n(st.rttA)+' ms · Klasik '+n(st.rtt)+' ms.';
+  return t;
 }
 function onLat(d){
   const b = $('sLat'); if(b){ b.disabled = false; b.textContent = 'Ölç'; }
   if(!d.ok){ toast(d.error || 'Ölçülemedi', 5000); return; }
-  const o = {latMs:d.fix, latMeasured:d.total}; AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o);
+  const o = {[d.key||'latMs']:d.fix, ['latMeasured'+(d.sfx||'')]:d.total};
+  if(d.rtt != null && d.rtt >= 0) o['rtt'+(d.sfx||'')] = d.rtt;
+  AX.setSettings(JSON.stringify(o)); Object.assign(S.settings, o);
   if($('sLatInfo')) $('sLatInfo').textContent = latInfo(S.settings);
-  toast('Gecikme '+String(d.total).replace('.',',')+' ms · '+(Math.abs(d.residual) < 1.5 ? 'hizalama zaten doğruydu' : 'düzeltme kaydedildi ('+(d.residual>0?'+':'')+String(d.residual).replace('.',',')+' ms)')+'. Tekrar ölçünce sapma ~0 çıkmalı.', 5200);
+  const n = v=>String(v).replace('.',',');
+  const head = d.rtt != null && d.rtt >= 0 ? 'Gidiş-dönüş '+n(d.rtt)+' ms (çıkış '+n(d.out)+' + giriş '+n(d.in)+')' : 'Gecikme '+n(d.total)+' ms';
+  toast(head+' · '+(Math.abs(d.residual) < 0.5 ? 'hizalama zaten doğruydu' : 'düzeltme kaydedildi ('+(d.residual>0?'+':'')+n(d.residual)+' ms)')+'. Tekrar ölçünce sapma ~0 çıkmalı.', 6500);
 }
 window.AXev = function(type, d){
   try{
@@ -2586,6 +2598,8 @@ renderTools();
     if(rs && rs.on){ rec = {mode:'insert', a:0, pre:0, blocks:[], from:0, m:newMeter(), paused:!!rs.paused}; $('recov').classList.remove('hide'); sizeRecCanvas(); recPoll(); }
   } else { renderHome(); showScreen('home'); }
   setTimeout(()=>showIntro(false), 300);
+  if(S.settings.aaFellBack){ AX.setSettings(JSON.stringify({aaFellBack:false})); S.settings.aaFellBack = false;
+    setTimeout(()=>toast('AAudio ses motoru bu telefonda iki kez sorun çıkardı; Klasik motora geçildi. Ayarlar’dan yeniden açabilirsiniz.', 6000), 1500); }
 })();
 </script>
 <script>AX.ready.then(()=>{const m=document.getElementById('appMain');const x=document.createElement('script');x.textContent=m.textContent;m.remove();document.body.appendChild(x);});</script>
