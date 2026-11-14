@@ -718,14 +718,9 @@ function nrJob(op, a, b, redDb, sensDb, label){
   const prof = cur.noise;
   return startJob(op, 'Gürültü azaltılıyor', async () => {
     const sr = cur.sr;
+    // all cores: chunks with context go to the Web Worker pool (C core in WebAssembly), results kept in order
     await replaceProcessed(label, a, b, Math.floor(sr / 20), async (e, A, B, out) => {
-      await chunked(A, B, D.NR_CHUNK, (buf, c0, n) => {
-        const s0 = c0 - D.NR_PAD; let wp = 0;
-        D.noiseReduce(e, s0, c0 + n + D.NR_PAD, sr, prof, redDb, sensDb, (bb, off, k) => {
-          for(let i = 0; i < k; i++){ const pos = s0 + wp + i; if(pos >= c0 && pos < c0 + n) buf[pos - c0] = bb[off + i]; }
-          wp += k;
-        });
-      }, out);
+      await D.parallelNR(e, A, B, sr, prof, redDb, sensDb, out, prog);
     });
     return {a, b, db:redDb};
   });
@@ -754,13 +749,8 @@ function closeProject(){
 // export / import
 // =====================================================================================
 async function renderRange(e, a, b){ const n = b - a, out = new Float32Array(n); const C = 1 << 18; for(let p = 0; p < n; p += C){ e.read(a + p, out, p, Math.min(C, n - p)); await prog(0.3 * p / n); } return out; }
-async function resample(x, sr, outSr){
-  if(sr === outSr) return x;
-  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  const n = Math.ceil(x.length * outSr / sr), oc = new OAC(1, n, outSr), buf = oc.createBuffer(1, x.length, sr);
-  buf.getChannelData(0).set(x); const s = oc.createBufferSource(); s.buffer = buf; s.connect(oc.destination); s.start();
-  const r = await oc.startRendering(); return r.getChannelData(0).slice(0);
-}
+/** Sample-rate conversion with the core's windowed-sinc resampler (identical to the Android export). */
+async function resample(x, sr, outSr){ return D.resample(x, sr, outSr); }
 function wav(x, sr, bits){
   const bps = bits / 8, n = x.length, data = n * bps, ab = new ArrayBuffer(44 + data), v = new DataView(ab);
   const s = (o, t) => { for(let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
@@ -827,51 +817,6 @@ function decodeText(buf){
   catch(e){ try { return new TextDecoder('windows-1254').decode(u.subarray(off)); } catch(e2){ return new TextDecoder().decode(u.subarray(off)); } }
 }
 
-// =====================================================================================
-// spectrogram (port of Dsp.spectrogram)
-// =====================================================================================
-function fftInPlace(re, im){
-  const n = re.length;
-  for(let i = 1, j = 0; i < n; i++){ let bit = n >> 1; for(; j & bit; bit >>= 1) j ^= bit; j ^= bit; if(i < j){ let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
-  for(let len = 2; len <= n; len <<= 1){
-    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
-    for(let i = 0; i < n; i += len){ let cr = 1, ci = 0; for(let k = 0; k < len / 2; k++){ const a = i + k, b = a + len / 2; const xr = re[b] * cr - im[b] * ci, xi = re[b] * ci + im[b] * cr; re[b] = re[a] - xr; im[b] = im[a] - xi; re[a] += xr; im[a] += xi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t; } }
-  }
-}
-function spectrogram(e, len, start, spp, cols, rows, sr){
-  const N = sr > 32000 ? 2048 : 1024, half = N / 2, FMIN = 50, LO = -110, HI = -10;
-  const win = new Float32Array(N); let wsum = 0; for(let i = 0; i < N; i++){ win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / N); wsum += win[i]; }
-  const norm2 = (2 / wsum) * (2 / wsum), nyq = sr / 2;
-  const b0 = new Int32Array(rows), b1 = new Int32Array(rows), fc = new Float64Array(rows);
-  for(let y = 0; y < rows; y++){
-    const t1 = 1 - y / rows, t0 = 1 - (y + 1) / rows, f0 = FMIN * Math.pow(nyq / FMIN, t0), f1 = FMIN * Math.pow(nyq / FMIN, t1);
-    let a = Math.round(f0 * N / sr), b = Math.round(f1 * N / sr); a = Math.max(1, Math.min(half, a)); b = Math.max(a, Math.min(half, b));
-    b0[y] = a; b1[y] = b; fc[y] = Math.sqrt(f0 * f1);
-  }
-  const K = Math.max(1, Math.min(Math.ceil(spp / half), Math.max(1, Math.floor(1500 / Math.max(1, cols)))));
-  const out = new Uint8Array(rows * cols), buf = new Float32Array(N), re = new Float32Array(N), im = new Float32Array(N), cm = new Float32Array(half + 1);
-  const scale = 255 / (HI - LO);
-  for(let c = 0; c < cols; c++){
-    const cs = start + c * spp; if(cs >= len || cs + spp <= 0) continue;
-    cm.fill(0);
-    for(let k = 0; k < K; k++){
-      const center = Math.floor(cs + (k + 0.5) * spp / K), p0 = center - half, a = Math.max(0, p0), b = Math.min(len, p0 + N);
-      if(b <= a) continue;
-      buf.fill(0); e.read(a, buf, a - p0, b - a);
-      for(let i = 0; i < N; i++){ re[i] = buf[i] * win[i]; im[i] = 0; }
-      fftInPlace(re, im);
-      for(let i = 1; i <= half; i++){ const m = re[i] * re[i] + im[i] * im[i]; if(m > cm[i]) cm[i] = m; }
-    }
-    for(let y = 0; y < rows; y++){
-      let m = 0;
-      if(b1[y] - b0[y] <= 1){ const fb = Math.min(half - 1, Math.max(1, fc[y] * N / sr)), i0 = Math.floor(fb), u = fb - i0; m = cm[i0] * (1 - u) + cm[i0 + 1] * u; }
-      else for(let i = b0[y]; i <= b1[y]; i++) if(cm[i] > m) m = cm[i];
-      const d = 10 * Math.log10(m * norm2 + 1e-20);
-      out[y * cols + c] = Math.max(0, Math.min(255, Math.round((d - LO) * scale)));
-    }
-  }
-  return out;
-}
 let specLatest = 0;
 
 // =====================================================================================
@@ -883,7 +828,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.4.0",
+  version: () => "web 0.4.1",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();
@@ -970,9 +915,9 @@ const AX = window.AX = {
   spectrum: (id, start, spp, cols, rows) => {
     const p = cur; if(!p || cols <= 0 || rows <= 0) return '';
     cols = Math.min(cols, 1024); rows = Math.min(rows, 256); specLatest = id;
-    setTimeout(() => {
+    setTimeout(async () => {
       if(specLatest !== id || cur !== p) return;
-      const out = spectrogram(p.edl(), p.length(), start, Math.max(1e-3, spp), cols, rows, p.sr);
+      const out = await D.spectrogramPar(p.edl(), p.length(), start, Math.max(1e-3, spp), cols, rows, p.sr);
       if(specLatest === id) emit('spec', {id, cols, rows, data: b64Bytes(out)});
     }, 0);
     return J({ok:true});
@@ -1172,7 +1117,9 @@ const AX = window.AX = {
       await replaceProcessed('Onar', ra, rb, N, async (e, A, B, out) => {
         await prog(0.1);
         const n = B - A, y = new Float32Array(n); let wp = 0;
-        D.spectralRepair(e, A, B, r[0], r[1], sr, 20, sr / 2, false, 0, (bb, o, k) => { const c = Math.min(k, n - wp); if(c > 0) y.set(bb.subarray(o, o + c), wp); wp += k; }, null);
+        const put = (bb, o, k) => { const c = Math.min(k, n - wp); if(c > 0) y.set(bb.subarray(o, o + c), wp); wp += k; };
+        // rebuilt from the surrounding sound (spectral fill); level reduction only when there is no reference
+        if(!D.spectralFill(e, A, B, r[0], r[1], sr, 20, sr / 2, put)){ wp = 0; D.spectralRepair(e, A, B, r[0], r[1], sr, 20, sr / 2, false, 0, put, null); }
         const x = new Float32Array(n); e.read(A, x, 0, n);
         const g0 = r[0] - A, g1 = r[1] - A;
         for(let i = Math.max(0, g0 - f); i < Math.min(n, g1 + f); i++){
@@ -1293,7 +1240,9 @@ const AX = window.AX = {
     return startJob('spectral', 'Spektral onarım', async () => {
       await replaceProcessed(att ? 'Spektral kıs ' + Math.round(dbv) + ' dB' : 'Spektral onar', ra, rb, N, async (e, A, B, out) => {
         await prog(0.1);
-        D.spectralRepair(e, A, B, r[0], r[1], sr, Math.max(20, Math.min(f0, f1)), Math.min(sr / 2, Math.max(f0, f1)), att, dbv, (bb, o, n) => out.append(bb, o, n), null);
+        const lo = Math.max(20, Math.min(f0, f1)), hi = Math.min(sr / 2, Math.max(f0, f1)), sk = (bb, o, n) => out.append(bb, o, n);
+        // "Onar": the band is rebuilt from the sound around the box; "Kıs": lowered by dbv
+        if(att || !D.spectralFill(e, A, B, r[0], r[1], sr, lo, hi, sk)) D.spectralRepair(e, A, B, r[0], r[1], sr, lo, hi, att, dbv, sk, null);
       });
       return {a:r[0], b:r[1]};
     });
@@ -1379,6 +1328,7 @@ const AX = window.AX = {
 // boot: load the project index, then start the UI
 // =====================================================================================
 AX.ready = (async () => {
+  await window.AXCORE.ready;   // C core (WebAssembly) + worker pool
   try {
     const all = await tx(['proj'], 'readonly', t => rq(t.objectStore('proj').getAll()));
     for(const m of all) if(m && m.id) metas.set(m.id, m);
