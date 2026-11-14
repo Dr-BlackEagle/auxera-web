@@ -38,6 +38,13 @@ input,select,textarea{font:inherit;color:var(--text);caret-color:var(--wave)}
 
 /* ---------- home ---------- */
 #home{padding:env(safe-area-inset-top) 0 0}
+/* reminder bubble: shown on every launch, closable for the session */
+.tipb{display:flex;align-items:center;gap:10px;margin:2px 16px 10px;padding:9px 6px 9px 12px;border:1px solid var(--line2);border-radius:14px;background:var(--panel);color:var(--text);font-size:13.5px;line-height:1.4}
+.tipb>.ic{width:20px;height:20px;flex:none;color:var(--wave)}
+.tipb span{flex:1;min-width:0}
+.tipb .iconbtn{flex:none;width:34px;height:34px}
+.tipb .iconbtn .ic{width:16px;height:16px}
+.tipnever{display:block;margin-top:4px;padding:2px 0;background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .hhead{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
 .logo{display:flex;align-items:center;gap:10px;flex:1}
 .logo b{font-size:21px;letter-spacing:.3px;font-weight:700}
@@ -540,6 +547,7 @@ html,body{background:var(--bg)}
     <button class="big rec" id="hNew"><svg class="ic"><use href="#i-mic"/></svg>Yeni kayıt</button>
     <button class="big sec" id="hOpen"><svg class="ic"><use href="#i-folder"/></svg>Dosya aç</button>
   </div>
+  <div class="tipb" id="hTip" role="note"><svg class="ic"><use href="#i-plane"/></svg><span>Kayıttan önce <b>uçak modunu</b> ya da <b>Rahatsız Etmeyin</b>’i açın: arama ve bildirimler kayda girmesin.<button class="tipnever" id="hTipNever">Bir daha gösterme</button></span><button class="iconbtn" id="hTipX" aria-label="Kapat"><svg class="ic"><use href="#i-x"/></svg></button></div>
   <div class="hsearch hide" id="hSearchW"><input class="field" id="hSearch" type="search" placeholder="Kayıtlarda ara…" aria-label="Kayıtlarda ara"></div>
   <div class="list" id="plist"></div>
   <div class="hfoot num" id="hFoot"></div>
@@ -2479,6 +2487,7 @@ function openSettings(){
     <div class="set-row"><label>Düzeltme kaydında ön dinleme<small>Kayda girmeden önce çalınacak süre.</small></label><select class="field" id="sPre">${[1,2,3,4,5].map(v=>opt(v,v+' sn',st.preroll)).join('')}</select></div>
     ${st.aaAvail ? `<div class="set-row"><label>Ses motoru<small>AAudio: Android'in düşük gecikmeli yolu (kayıt ve çalma). Sorun yaşarsanız Klasik'e dönün. Her motorun gecikmesi ayrı ölçülür.</small></label><select class="field" id="sEng">${opt('aaudio','AAudio (düşük gecikme)',st.engine||'aaudio')}${opt('classic','Klasik',st.engine)}</select></div>
     <div class="set-row"><label>Özel (exclusive) mod<small>Ses donanımını yalnızca Auxera kullanır; gecikme en düşük olur. Kayıt/çalma sırasında diğer uygulamaların sesi duyulmayabilir.</small></label>${sw('sExc', st.exclusive!==false)}</div>` : ''}
+    <div class="set-row"><label>Kayıt öncesi hatırlatma<small>Ana ekranda her açılışta uçak modu / Rahatsız Etmeyin hatırlatması.</small></label>${sw('sTip', !st.tipHide)}</div>
     <div class="set-row"><label>Düzeltme kaydı hizalaması<small id="sLatInfo">${latInfo(st)}</small></label><button class="btn" id="sLat">Ölç</button></div>
     <div class="set-sec">Gürültü</div>
     <div class="set-row"><label>Kayıttan önce ortam sesi<small>Kayda basınca 3 sn sessiz durursunuz. Oda sesi ölçülür ve gürültü örneği olarak saklanır; kayda eklenmez.</small></label><select class="field" id="sRoom">${opt('off','Kapalı',st.room)}${opt('first','Projede ilk kayıtta',st.room)}${opt('each','Her kayıttan önce',st.room)}</select></div>
@@ -2506,6 +2515,7 @@ function openSettings(){
     });
   };
   if($('sEng')) $('sEng').onchange = e=>{ save({engine:e.target.value}); loadSettings(); $('sLatInfo').textContent = latInfo(S.settings); };
+  $('sTip').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({tipHide:!on}); };
   if($('sExc')) $('sExc').onclick = e=>{ const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); save({exclusive:on}); };
   $('sOr').onchange = e=>save({orient:e.target.value});
   $('sRoom').onchange = e=>save({room:e.target.value});
@@ -2574,12 +2584,8 @@ const INTRO = [
   {t:'Temizlik ve teslim', i:'noise', b:'Temizle sekmesi gürültü, nefes, ağız sesi ve uğultuyu temizler; her araçta önce <b>Dinle</b> ile orijinalle karşılaştırın. Araca basılı tutarsanız ne yaptığı yazar. Dışa aktarmada sesli kitap, stüdyo ve paylaşım hazır ayarları var.'}
 ];
 function showIntro(force){
-  let list = INTRO;
-  if(!force && S.settings.introDone){
-    if(S.settings.tipPlane) return;
-    list = [PLANE_TIP];            // users who saw the intro before this tip existed get it once
-  }
-  const INTRO_ = list;
+  if(!force && S.settings.introDone) return;
+  const INTRO_ = INTRO;
   let k = 0;
   const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Kısa tanıtım');
   const render = ()=>{
@@ -2589,7 +2595,7 @@ function showIntro(force){
       <div class="btns" style="margin-top:0">${INTRO_.length > 1 ? `<button class="btn" id="inSkip">${k===INTRO_.length-1?'Kapat':'Geç'}</button>` : ''}<button class="btn pri" id="inNext">${INTRO_.length === 1 ? 'Anladım' : k===INTRO_.length-1?'Başla':'İleri'}</button></div></div>`;
     if($('inSkip')) $('inSkip').onclick = done; $('inNext').onclick = ()=>{ if(k < INTRO_.length-1){ k++; render(); } else done(); };
   };
-  const done = ()=>{ el.remove(); S.settings.introDone = true; S.settings.tipPlane = true; AX.setSettings(JSON.stringify({introDone:true, tipPlane:true})); };
+  const done = ()=>{ el.remove(); S.settings.introDone = true; AX.setSettings(JSON.stringify({introDone:true})); };
   document.body.appendChild(el); render();
 }
 
@@ -2605,6 +2611,12 @@ renderTools();
     enterEditor(st);
     if(rs && rs.on){ rec = {mode:'insert', a:0, pre:0, blocks:[], from:0, m:newMeter(), paused:!!rs.paused}; $('recov').classList.remove('hide'); sizeRecCanvas(); recPoll(); }
   } else { renderHome(); showScreen('home'); }
+  // launch reminder: × hides it until the next launch, "Bir daha gösterme" for good (back via Ayarlar)
+  if(S.settings.tipHide) $('hTip').remove();
+  else {
+    $('hTipX').onclick = ()=>$('hTip').remove();
+    $('hTipNever').onclick = ()=>{ $('hTip').remove(); S.settings.tipHide = true; AX.setSettings(JSON.stringify({tipHide:true})); toast('Hatırlatma kapatıldı. Ayarlar’dan yeniden açabilirsiniz.'); };
+  }
   setTimeout(()=>showIntro(false), 300);
   if(S.settings.aaFellBack){ AX.setSettings(JSON.stringify({aaFellBack:false})); S.settings.aaFellBack = false;
     setTimeout(()=>toast('AAudio ses motoru bu telefonda iki kez sorun çıkardı; Klasik motora geçildi. Ayarlar’dan yeniden açabilirsiniz.', 6000), 1500); }
