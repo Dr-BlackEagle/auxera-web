@@ -511,7 +511,7 @@ html,body{background:var(--bg)}
     <symbol id="i-zsel" viewBox="0 0 24 24"><path d="M5 5h3M5 5v14M5 19h3M19 5h-3M19 5v14M19 19h-3"/><path d="M10 12h4"/></symbol>
     <symbol id="i-vz" viewBox="0 0 24 24"><path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.2h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
-    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.5 4.2a1.5 1.5 0 0 1 3 0V9.5l7 4.2v2l-7-2.2v4.3l2 1.5v1.6l-3.5-1-3.5 1v-1.6l2-1.5v-4.3l-7 2.2v-2l7-4.2z"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
     <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h11M4 18h8"/><path d="m17 15 3 2.5-3 2.5"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
@@ -2566,23 +2566,30 @@ window.AXback = function(){
 };
 
 // ---- first-run intro ----
+const PLANE_TIP = {t:'Kayıttan önce', i:'plane', b:'Telefon ya da tabletle kayıt alırken <b>uçak modunu</b> (ya da <b>Rahatsız Etmeyin</b>’i) açmanızı öneririz. Gelen arama, bildirim sesi ve titreşim kayda girer; uçak modu ayrıca şebekenin mikrofona karışan “bzzt” parazitini de keser. Bluetooth kulaklık kullanıyorsanız uçak modundayken Bluetooth’u yeniden açabilirsiniz.'};
 const INTRO = [
+  PLANE_TIP,
   {t:'Kayıt', i:'mic', b:'Kayda basınca önce seviye ekranı açılır: tepeler sarı bandın içinde kalacak şekilde gain’i ayarlayıp kırmızı düğmeyle başlayın. Okurken hata yaparsanız <b>kırmızı bayrağa</b> ya da kulaklık/pedal tuşuna basın.'},
   {t:'Düzenleme', i:'cut', b:'Dalgada tek parmakla sürükleyerek seçin, iki parmakla yakınlaştırın. Kaydırmak için zaman cetvelini sürükleyin ya da sağ üstteki <b>el</b> düğmesini açın. Seçim süresine dokunursanız milisaniye ayarı açılır; geri al düğmesine basılı tutunca geçmiş açılır.'},
   {t:'Temizlik ve teslim', i:'noise', b:'Temizle sekmesi gürültü, nefes, ağız sesi ve uğultuyu temizler; her araçta önce <b>Dinle</b> ile orijinalle karşılaştırın. Araca basılı tutarsanız ne yaptığı yazar. Dışa aktarmada sesli kitap, stüdyo ve paylaşım hazır ayarları var.'}
 ];
 function showIntro(force){
-  if(!force && S.settings.introDone) return;
+  let list = INTRO;
+  if(!force && S.settings.introDone){
+    if(S.settings.tipPlane) return;
+    list = [PLANE_TIP];            // users who saw the intro before this tip existed get it once
+  }
+  const INTRO_ = list;
   let k = 0;
   const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Kısa tanıtım');
   const render = ()=>{
-    const it = INTRO[k];
+    const it = INTRO_[k];
     el.innerHTML = `<div class="card2"><div class="ih">${ic(it.i)}${it.t}</div><p>${it.b}</p>
-      <div class="dots">${INTRO.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>
-      <div class="btns" style="margin-top:0"><button class="btn" id="inSkip">${k===INTRO.length-1?'Kapat':'Geç'}</button><button class="btn pri" id="inNext">${k===INTRO.length-1?'Başla':'İleri'}</button></div></div>`;
-    $('inSkip').onclick = done; $('inNext').onclick = ()=>{ if(k < INTRO.length-1){ k++; render(); } else done(); };
+      ${INTRO_.length > 1 ? `<div class="dots">${INTRO_.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>` : ''}
+      <div class="btns" style="margin-top:0">${INTRO_.length > 1 ? `<button class="btn" id="inSkip">${k===INTRO_.length-1?'Kapat':'Geç'}</button>` : ''}<button class="btn pri" id="inNext">${INTRO_.length === 1 ? 'Anladım' : k===INTRO_.length-1?'Başla':'İleri'}</button></div></div>`;
+    if($('inSkip')) $('inSkip').onclick = done; $('inNext').onclick = ()=>{ if(k < INTRO_.length-1){ k++; render(); } else done(); };
   };
-  const done = ()=>{ el.remove(); S.settings.introDone = true; AX.setSettings(JSON.stringify({introDone:true})); };
+  const done = ()=>{ el.remove(); S.settings.introDone = true; S.settings.tipPlane = true; AX.setSettings(JSON.stringify({introDone:true, tipPlane:true})); };
   document.body.appendChild(el); render();
 }
 
