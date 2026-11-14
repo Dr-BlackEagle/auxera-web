@@ -301,6 +301,16 @@ select.field{height:38px;width:auto;max-width:56%;padding:0 8px}
 .rv-mode{font-weight:650;font-size:15px;display:flex;align-items:center;gap:8px}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--rec)}
 .dot.blink{animation:bl 1s infinite}
+/* classic ● REC badge: blinks while the take is live; amber while checking level / pre-roll; grey when paused */
+.recb{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 9px;border-radius:8px;border:1px solid rgba(255,77,77,.4);background:rgba(255,59,59,.12);color:var(--rec);font:700 13px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:1.5px;flex:none}
+.rv-mode{flex:none}.rv-tr .rv-txt{white-space:nowrap}.rv-tr{min-width:0}
+.recb .dot{width:10px;height:10px;box-shadow:0 0 8px rgba(255,77,77,.8)}
+.recb.live .dot{animation:recbl 1s steps(1,end) infinite}
+@keyframes recbl{50%{opacity:.12;box-shadow:none}}
+.recb.wait{color:var(--amber);border-color:rgba(255,190,70,.4);background:rgba(255,190,70,.1)}
+.recb.wait .dot{background:var(--amber);box-shadow:0 0 8px rgba(255,190,70,.6)}
+.recb.paused{color:var(--muted);border-color:var(--line2);background:transparent}
+.recb.paused .dot{background:var(--muted);box-shadow:none}
 @keyframes bl{50%{opacity:.25}}
 .rv-src{color:var(--muted);font-size:12px}
 .rv-tr{display:flex;align-items:center;gap:10px;min-width:0}
@@ -638,7 +648,7 @@ html,body{background:var(--bg)}
 <!-- ================= RECORD OVERLAY ================= -->
 <section id="recov" class="hide">
   <div class="rv-top">
-    <div class="rv-mode"><span class="dot blink" id="rvDot"></span><span id="rvMode">Kayıt</span></div>
+    <div class="rv-mode"><span class="recb" id="rvRec" role="status"><span class="dot" id="rvDot"></span><b id="rvRecT">REC</b></span><span id="rvMode">Kayıt</span></div>
     <div class="rv-tr"><button class="pill rv-txt" id="rvScript"><svg class="ic" style="width:15px;height:15px"><use href="#i-text"/></svg>Metin ekle</button><div class="rv-src" id="rvSrc"></div></div>
   </div>
   <div class="rv-main">
@@ -1686,14 +1696,17 @@ function recPoll(){
       stEl.className = 'rv-state pre';
       stEl.innerHTML = 'Seviye ayarı' + (bd ? ' · hedef '+String(bd[0]).replace('-','−')+' … '+String(bd[1]).replace('-','−')+' dB' : '') + (st.clip? '<span class="cliptag">CLIP</span>':'');
     } else stEl.innerHTML = !st.started ? 'Mikrofon açılıyor…' : pre ? 'Ön dinleme… hazırlanın' : st.paused ? 'Duraklatıldı' : ('Kaydediliyor' + (st.clip? '<span class="cliptag">CLIP</span>':''));
-    $('rvDot').classList.toggle('blink', !st.paused && !pre && !room && !st.test);
-    if(st.test) $('rvDot').style.background = 'var(--amber)';
     const live = !!st.started && !pre && !room && !st.paused && !st.test;
+    const rb = $('rvRec'), rbState = live ? 'live' : st.paused && !st.test ? 'paused' : 'wait';
+    if(rb.dataset.s !== rbState || rb.dataset.t !== String(!!st.test)){
+      rb.dataset.s = rbState; rb.dataset.t = String(!!st.test);
+      rb.className = 'recb ' + rbState;
+      $('rvRecT').textContent = st.test ? 'SEVİYE' : rbState === 'wait' ? 'HAZIR' : 'REC';
+    }
     if(PR.active){
       if(live && !PR.recording){ PR.recording = true; AX.cue(PR.idx); }
       PR.canScroll = live;
     }
-    $('rvDot').style.background = room||pre ? 'var(--amber)' : '';
     if(st.roomDb > -999 && !rec.roomShown){ rec.roomShown = true; $('rvNote').innerHTML = roomVerdict(st.roomDb, true); }
     // free space -> remaining recording time
     if(st.free != null && st.bytesPerSec > 0){
