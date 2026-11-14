@@ -828,7 +828,7 @@ const AX = window.AX = {
   setSettings: j => { try { Object.assign(settings, JSON.parse(j)); saveSettings(); } catch(e){} },
   resetSettings: () => { const intro = !!settings.introDone; settings = Object.assign({}, DEF, {introDone:intro}); saveSettings(); return J(settings); },
   busy: () => busy,
-  version: () => "web 0.4.5",
+  version: () => "web 0.4.6",
   hasMic: () => MIC.granted,
   askMic: () => {
     ctx();

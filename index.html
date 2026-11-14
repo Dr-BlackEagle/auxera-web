@@ -618,8 +618,8 @@ html,body{background:var(--bg)}
   </div>
   <div class="tools">
     <div class="tabs" id="tabs">
-      <button data-t="edit" class="on">Düzenle</button>
-      <button data-t="clean">Temizle</button>
+      <button data-t="edit">Düzenle</button>
+      <button data-t="clean" class="on">Temizle</button>
       <button data-t="level">Seviye</button>
       <i class="lens" aria-hidden="true"></i>
     </div>
@@ -729,7 +729,7 @@ const S = {
   screen:'home', st:null, len:0, sr:48000,
   start:0, spp:100,        // view: first visible sample, samples per CSS pixel
   cursor:0, sel:null,      // sel = {a,b}
-  playing:false, ppos:-1, vz:1, tab:'edit',
+  playing:false, ppos:-1, vz:1, tab:'clean',
   breath:null,             // {regions:[{a,b,on}], idx}
   settings:{}, jobCb:null, permCb:null,
   marks:[], mIdx:-1, markSel:null, pan:false, busy:false, ab:false, hq:''
@@ -788,6 +788,7 @@ function openProject(id){
 function enterEditor(st){
   setState(st);
   S.cursor = 0; S.sel = null; S.breath = null; S.ppos=-1;
+  if(S.tab !== 'clean'){ S.tab = 'clean'; renderTools(); }   // the editor always opens on Temizle
   showScreen('editor');
   requestAnimationFrame(()=>placeLens(S.tab, false));
   specCache = null; specPend = null; setSpec((()=>{try{return localStorage.getItem('spec')==='1'}catch(e){return false}})());
@@ -964,11 +965,11 @@ const TOOLS = {
     {id:'paste', l:'Yapıştır', i:'paste', need:'clip', fn:()=>edit('paste')},
     {id:'del', l:'Sil', i:'trash', need:'sel', fn:()=>edit('del')},
     {id:'crop', l:'Kırp', i:'crop', need:'sel', fn:()=>edit('crop')},
-    {id:'mute', l:'Sustur', i:'mute', need:'sel', fn:()=>edit('mute')},
     {id:'gap', l:'Boşluk ekle', i:'gap', need:'', fn:()=>sheetSilence()},
     {id:'script', l:'Metin', i:'text', need:'', acc:1, fn:()=>sheetScript()},
   ],
   clean:[
+    {id:'mute', l:'Sustur', i:'mute', need:'sel', acc:1, fn:()=>edit('mute')},
     {id:'noise', l:'Gürültü', i:'noise', need:'audio', acc:1, fn:()=>sheetNoise()},
     {id:'breath', l:'Nefes', i:'breath', need:'audio', acc:1, fn:()=>sheetBreath()},
     {id:'heal', l:'Onar', i:'heal', need:'audio', acc:1, fn:()=>doHeal()},
