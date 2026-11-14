@@ -40,7 +40,8 @@ input,select,textarea{font:inherit;color:var(--text);caret-color:var(--wave)}
 #home{padding:env(safe-area-inset-top) 0 0}
 /* reminder bubble: shown on every launch, closable for the session */
 .tipb{display:flex;align-items:center;gap:10px;margin:2px 16px 10px;padding:9px 6px 9px 12px;border:1px solid var(--line2);border-radius:14px;background:var(--panel);color:var(--text);font-size:13.5px;line-height:1.4}
-.tipb>.ic{width:20px;height:20px;flex:none;color:var(--wave)}
+.tipb{align-items:flex-start}
+.tipb>.ic{width:20px;height:20px;flex:none;color:var(--wave);margin-top:2px}
 .tipb span{flex:1;min-width:0}
 .tipb .iconbtn{flex:none;width:34px;height:34px}
 .tipb .iconbtn .ic{width:16px;height:16px}
@@ -547,7 +548,7 @@ html,body{background:var(--bg)}
     <button class="big rec" id="hNew"><svg class="ic"><use href="#i-mic"/></svg>Yeni kayıt</button>
     <button class="big sec" id="hOpen"><svg class="ic"><use href="#i-folder"/></svg>Dosya aç</button>
   </div>
-  <div class="tipb" id="hTip" role="note"><svg class="ic"><use href="#i-plane"/></svg><span>Kayıttan önce <b>uçak modunu</b> ya da <b>Rahatsız Etmeyin</b>’i açın: arama ve bildirimler kayda girmesin.<button class="tipnever" id="hTipNever">Bir daha gösterme</button></span><button class="iconbtn" id="hTipX" aria-label="Kapat"><svg class="ic"><use href="#i-x"/></svg></button></div>
+  <div class="tipb" id="hTip" role="note"><svg class="ic"><use href="#i-plane"/></svg><span>Telefon ya da tabletle kayıt alırken <b>uçak modunu</b> (ya da <b>Rahatsız Etmeyin</b>’i) açmanızı öneririz. Gelen arama, bildirim sesi ve titreşim kayda girer; uçak modu ayrıca şebekenin mikrofona karışan “bzzt” parazitini de keser. Bluetooth kulaklık kullanıyorsanız uçak modundayken Bluetooth’u yeniden açabilirsiniz.<button class="tipnever" id="hTipNever">Bir daha gösterme</button></span><button class="iconbtn" id="hTipX" aria-label="Kapat"><svg class="ic"><use href="#i-x"/></svg></button></div>
   <div class="hsearch hide" id="hSearchW"><input class="field" id="hSearch" type="search" placeholder="Kayıtlarda ara…" aria-label="Kayıtlarda ara"></div>
   <div class="list" id="plist"></div>
   <div class="hfoot num" id="hFoot"></div>
