@@ -302,14 +302,14 @@ select.field{height:38px;width:auto;max-width:56%;padding:0 8px}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--rec)}
 .dot.blink{animation:bl 1s infinite}
 /* classic ● REC badge: blinks while the take is live; amber while checking level / pre-roll; grey when paused */
-.recb{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 9px;border-radius:8px;border:1px solid rgba(255,77,77,.4);background:rgba(255,59,59,.12);color:var(--rec);font:700 13px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:1.5px;flex:none}
+.recb{display:inline-flex;align-items:center;gap:7px;padding:5px 0;color:var(--rec);font:700 13px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:1.5px;flex:none}
 .rv-mode{flex:none}.rv-tr .rv-txt{white-space:nowrap}.rv-tr{min-width:0}
 .recb .dot{width:10px;height:10px;box-shadow:0 0 8px rgba(255,77,77,.8)}
 .recb.live .dot{animation:recbl 1s steps(1,end) infinite}
 @keyframes recbl{50%{opacity:.12;box-shadow:none}}
-.recb.wait{color:var(--amber);border-color:rgba(255,190,70,.4);background:rgba(255,190,70,.1)}
+.recb.wait{color:var(--amber)}
 .recb.wait .dot{background:var(--amber);box-shadow:0 0 8px rgba(255,190,70,.6)}
-.recb.paused{color:var(--muted);border-color:var(--line2);background:transparent}
+.recb.paused{color:var(--muted)}
 .recb.paused .dot{background:var(--muted);box-shadow:none}
 @keyframes bl{50%{opacity:.25}}
 .rv-src{color:var(--muted);font-size:12px}
