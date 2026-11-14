@@ -311,6 +311,9 @@ select.field{height:38px;width:auto;max-width:56%;padding:0 8px}
 .recb.wait .dot{background:var(--amber);box-shadow:0 0 8px rgba(255,190,70,.6)}
 .recb.paused{color:var(--muted)}
 .recb.paused .dot{background:var(--muted);box-shadow:none}
+/* camcorder position: its own corner under the top bar (inline in the bar while the teleprompter uses that space) */
+#recov:not(.script) .recb{position:absolute;left:20px;top:calc(env(safe-area-inset-top) + 66px);font-size:19px;letter-spacing:2px;gap:10px}
+#recov:not(.script) .recb .dot{width:14px;height:14px}
 @keyframes bl{50%{opacity:.25}}
 .rv-src{color:var(--muted);font-size:12px}
 .rv-tr{display:flex;align-items:center;gap:10px;min-width:0}
