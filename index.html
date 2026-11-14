@@ -466,10 +466,36 @@ html,body{background:var(--bg)}
 .tool{flex:0 0 23%;scroll-snap-align:start}
 .tool span,.tool{white-space:nowrap}
 }
+
+/* ---- launch splash: the logo draws itself, then the name; ~1.9 s, tap to skip ---- */
+.splash{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:var(--bg);transition:opacity .35s ease}
+.splash.out{opacity:0;pointer-events:none}
+.splash .mark{display:flex;flex-direction:column;align-items:center;gap:18px}
+.splash svg{width:74px;height:118px;overflow:visible}
+.splash path{stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw .9s cubic-bezier(.65,0,.35,1) .15s forwards}
+.splash .word{font-size:34px;font-weight:650;letter-spacing:.5px;color:var(--text);opacity:0;transform:translateY(8px);animation:spUp .5s ease .85s forwards}
+.splash .tag{font-size:14px;color:var(--muted);opacity:0;transform:translateY(8px);animation:spUp .5s ease 1.05s forwards;margin-top:-10px}
+.splash .meter{display:flex;gap:4px;height:18px;align-items:flex-end;opacity:0;animation:spFade .3s ease 1.1s forwards}
+.splash .meter i{width:4px;border-radius:2px;background:var(--wave);height:4px;animation:spBar .9s ease-in-out 1.1s infinite alternate}
+.splash .meter i:nth-child(2){animation-delay:1.2s}.splash .meter i:nth-child(3){animation-delay:1.3s}.splash .meter i:nth-child(4){animation-delay:1.15s}.splash .meter i:nth-child(5){animation-delay:1.25s}
+@keyframes spDraw{to{stroke-dashoffset:0}}
+@keyframes spUp{to{opacity:1;transform:none}}
+@keyframes spFade{to{opacity:.8}}
+@keyframes spBar{from{height:4px}to{height:16px}}
+@media (prefers-reduced-motion:reduce){.splash path,.splash .word,.splash .tag,.splash .meter,.splash .meter i{animation:none;stroke-dashoffset:0;opacity:1;transform:none}}
 </style>
 <style>body{-webkit-touch-callout:none}textarea,input,select{font-size:16px}</style>
 </head>
 <body>
+<div class="splash" id="splash" aria-hidden="true"><div class="mark">
+  <svg viewBox="30 -12 140 224"><defs><linearGradient id="spg" gradientUnits="userSpaceOnUse" x1="0" y1="-10" x2="0" y2="210"><stop offset="0" stop-color="#b39dff"/><stop offset="1" stop-color="#6f3cff"/></linearGradient></defs>
+  <path pathLength="1" d="M53.5 120 A15.5 15.5 0 0 0 69 104.5 V18.2 A15.5 15.5 0 0 1 100 18.2 V95.7 M100 104.3 V181.8 A15.5 15.5 0 0 0 131 181.8 V95.5 A15.5 15.5 0 0 1 146.5 80" fill="none" stroke="url(#spg)" stroke-width="15.2"/></svg>
+  <div class="word">Auxera</div><div class="tag">Ses kayıt ve düzenleme stüdyosu</div>
+  <div class="meter"><i></i><i></i><i></i><i></i><i></i></div>
+</div></div>
+<script>(function(){ const sp = document.getElementById('splash'); if(window.AX_NOSPLASH){ sp.remove(); return; }
+  const end = () => { if(!sp.isConnected || sp.classList.contains('out')) return; sp.classList.add('out'); setTimeout(() => sp.remove(), 400); };
+  sp.addEventListener('pointerdown', end); setTimeout(end, matchMedia('(prefers-reduced-motion: reduce)').matches ? 700 : 1900); })();</script>
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
@@ -2618,7 +2644,7 @@ renderTools();
     $('hTipX').onclick = ()=>$('hTip').remove();
     $('hTipNever').onclick = ()=>{ $('hTip').remove(); S.settings.tipHide = true; AX.setSettings(JSON.stringify({tipHide:true})); toast('Hatırlatma kapatıldı. Ayarlar’dan yeniden açabilirsiniz.'); };
   }
-  setTimeout(()=>showIntro(false), 300);
+  setTimeout(()=>showIntro(false), document.getElementById('splash') ? 2300 : 300);   // after the launch splash
   if(S.settings.aaFellBack){ AX.setSettings(JSON.stringify({aaFellBack:false})); S.settings.aaFellBack = false;
     setTimeout(()=>toast('AAudio ses motoru bu telefonda iki kez sorun çıkardı; Klasik motora geçildi. Ayarlar’dan yeniden açabilirsiniz.', 6000), 1500); }
 })();
