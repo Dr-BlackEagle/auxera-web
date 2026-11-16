@@ -2125,15 +2125,14 @@ function sheetNoise(){
   const s = selOrNull();
   const have = !!st.noise;
   const selOk = s && (s.b-s.a) >= S.sr*0.25;
-  // The selection is often the noise sample itself (picked by hand or by "en sessiz bölüm"): cleaning only that
-  // sample is never the intent, so the target is then the whole take. A different selection can still be chosen.
-  const isSample = s && have && st.noiseSrc!=='room' && Math.abs(s.a-st.noiseA) < S.sr*0.02 && Math.abs(s.b-st.noiseB) < S.sr*0.02;
-  const key = s? s.a+':'+s.b+':'+isSample : '';
-  if(S.nTgtKey!==key){ S.nTgtKey=key; S.nTgt = s && !isSample ? 'sel' : 'all'; }
+  // In this sheet a selection is nearly always the noise sample (picked by hand or by "en sessiz bölüm"), so the
+  // cleaning target starts as the whole take; "Seçim" limits it to the selection on purpose.
+  const key = s? s.a+':'+s.b : '';
+  if(S.nTgtKey!==key){ S.nTgtKey=key; S.nTgt='all'; }
   const tgtAll = !s || S.nTgt==='all';
   const tgtHtml = s
     ? `<div class="seg" id="nTgt" style="margin-top:6px"><button data-v="all" class="${tgtAll?'on':''}">Tüm kayıt · ${fmtDur(S.len,S.sr)}</button><button data-v="sel" class="${tgtAll?'':'on'}">Seçim · ${fmtDur(s.b-s.a,S.sr)}</button></div>`
-      + (isSample? '<div class="hint">Seçim gürültü örneği; temizlik tüm kayda uygulanır.</div>' : '')
+      + `<div class="hint">${tgtAll? 'Temizlik tüm kayda uygulanır. Yalnızca seçili bölümü temizlemek için “Seçim”e dokunun.' : 'Yalnızca seçili bölüm temizlenir.'}</div>`
     : `<div style="margin-top:6px">${targetLabel()}</div>`;
   const tRange = ()=> tgtAll ? [0,0] : [s.a, s.b];
   openSheet('Gürültü azaltma', `
@@ -2150,7 +2149,7 @@ function sheetNoise(){
   const prm = ()=>{ const red=+$('nRed').value, sens=+$('nSens').value; S.settings.nrRed=red; S.settings.nrSens=sens; AX.setSettings(JSON.stringify({nrRed:red,nrSens:sens})); return {red,sens}; };
   $('nProf').onclick = ()=>{
     const a = selOk? s.a:0, b = selOk? s.b:0;
-    runJob(AX.noiseProfile(a,b), ev=>{ if(ev.ok){ toast(ev.result.auto? 'En sessiz bölüm bulundu ve örnek alındı':'Gürültü örneği alındı'); if(ev.result.auto){ S.sel={a:ev.result.a,b:ev.result.b}; } sheetNoise(); draw(); } });
+    runJob(AX.noiseProfile(a,b), ev=>{ if(ev.ok){ toast(ev.result.auto? 'En sessiz bölüm bulundu ve örnek alındı':'Gürültü örneği alındı'); if(ev.result.auto){ S.sel={a:ev.result.a,b:ev.result.b}; } S.nTgt='all'; S.nTgtKey=S.sel? S.sel.a+':'+S.sel.b : ''; sheetNoise(); draw(); } });
   };
   if(s) segBind('nTgt', v=>{ S.nTgt=v; sheetNoise(); });
   $('nPrev').onclick = ()=>{ const p=prm(); const [a,b]=tRange(); runJob(AX.preview('noiseReduce', a, b, JSON.stringify(p))); };
