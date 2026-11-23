@@ -1105,16 +1105,20 @@ function resize(){
   clampView();
   vmDraw();
 }
+// Kaydın başı (0) ve sonu ekran kenarından EDGE px içeride durabilir; böylece parmak/imleç kenara
+// ulaşmadan başa/sona kadar seçim yapılabilir. Bu boşluk dalga zemininin rengindedir (içine çizim yapılmaz).
+const EDGE = 20;
+function edgeW(){ return Math.max(W - 2*EDGE, W*0.5); }
 function minSpp(){ return 0.05; }
-function maxSpp(){ return Math.max(S.len, S.sr*10) / W * 1.02; }
+function maxSpp(){ return Math.max(S.len, S.sr*10) / edgeW() * 1.02; }
 function clampView(){
   S.spp = clamp(S.spp, minSpp(), maxSpp());
-  const vis = W*S.spp;
-  const maxStart = Math.max(0, S.len - vis*0.5);
-  S.start = clamp(S.start, Math.min(0, S.len - vis), maxStart);
-  if(S.len <= vis) S.start = 0;
+  const vis = W*S.spp, m = EDGE*S.spp;
+  const maxStart = Math.max(-m, S.len - vis*0.5);
+  S.start = clamp(S.start, Math.min(-m, S.len + m - vis), maxStart);
+  if(S.len + 2*m <= vis) S.start = -m;
 }
-function fit(){ S.spp = maxSpp(); S.start = 0; clampView(); draw(true); }
+function fit(){ S.spp = maxSpp(); S.start = -EDGE*S.spp; clampView(); draw(true); }
 function zoomAt(f, xc){
   if(xc==null) xc = (S.playing && S.ppos>=0) ? xOf(S.ppos) : (selOrNull()? (xOf(S.sel.a)+xOf(S.sel.b))/2 : xOf(S.cursor));
   if(xc<0||xc>W) xc = W/2;
@@ -1174,6 +1178,7 @@ function paintSpec(c, cw, ch){
   const x0 = (sc.start - S.start)/S.spp*dpr, w = sc.cols*sc.spp/S.spp*dpr;
   c.imageSmoothingEnabled = true; c.drawImage(sc.cv, x0, 0, w, ch);
   const xe = xOf(S.len)*dpr; if(xe < cw){ c.fillStyle = '#06070a'; c.fillRect(Math.max(0,xe), 0, cw-Math.max(0,xe), ch); }
+  const xs = xOf(0)*dpr; if(xs > 0){ c.fillStyle = '#06070a'; c.fillRect(0, 0, Math.min(cw, xs), ch); }
 }
 function specFreqY(f, ch){ const nyq = S.sr/2; return (1 - Math.log(f/SPEC_FMIN)/Math.log(nyq/SPEC_FMIN))*ch; }
 function setSpec(on){
@@ -1229,7 +1234,8 @@ function paint(){
     if(pk.mode==='peaks'){
       const d = pk.data, n = d.length>>1;
       const k = amp/32767;
-      for(let i=0;i<n;i++){
+      const c0 = Math.max(0, Math.floor(xOf(0)*dpr)), c1 = Math.min(n, Math.ceil(xOf(S.len)*dpr));  // kaydın kapladığı sütunlar
+      for(let i=c0;i<c1;i++){
         let mn = d[2*i]*k, mx = d[2*i+1]*k;
         if(mx-mn < 1) { const m=(mx+mn)/2; mn=m-0.5; mx=m+0.5; }
         const inSel = s && i>=sx0 && i<=sx1;
@@ -1238,7 +1244,7 @@ function paint(){
       }
       // soft inner core
       c.globalAlpha = 0.35;
-      for(let i=0;i<n;i+=1){
+      for(let i=c0;i<c1;i+=1){
         const mn = d[2*i]*k*0.45, mx = d[2*i+1]*k*0.45;
         const inSel = s && i>=sx0 && i<=sx1;
         c.fillStyle = inSel ? '#ffffff' : '#9ff5e5';
@@ -1609,7 +1615,7 @@ $('tPlay').onclick = ()=>{
   if(s) startPlay(s.a, s.b);
   else startPlay(S.cursor >= S.len-10 ? 0 : S.cursor, 0);
 };
-$('tStart').onclick = ()=>{ const was = S.playing; stopPlay(); S.cursor = 0; S.sel=null; S.start=0; clampView(); updateButtons(); draw(); if(was) startPlay(0,0); };
+$('tStart').onclick = ()=>{ const was = S.playing; stopPlay(); S.cursor = 0; S.sel=null; S.start=-EDGE*S.spp; clampView(); updateButtons(); draw(); if(was) startPlay(0,0); };
 $('tEnd').onclick = ()=>{ stopPlay(); S.cursor = S.len; S.sel=null; S.start = S.len - W*S.spp*0.9; clampView(); updateButtons(); draw(); };
 
 // =====================================================================================
