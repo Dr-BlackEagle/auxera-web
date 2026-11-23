@@ -1197,12 +1197,11 @@ function paint(){
   // dB grid (same scale as the ruler on the right)
   c.fillStyle = 'rgba(255,255,255,0.045)';
   for(const db of [-3,-6,-12,-18,-24,-36]){ const d = Math.pow(10,db/20)*amp; if(d < 8*dpr) continue; for(const y of [mid-d, mid+d]) if(y>0&&y<ch) c.fillRect(0, Math.round(y), cw, 1); }
+  // kesikli kılavuz çizgileri: 0 dB (tam ölçek) her zaman, hedef bant (ör. −9 … −6 dB) ayarlıysa
   const bd = bandRange();
-  if(bd){
-    c.strokeStyle = 'rgba(255,196,77,0.38)'; c.lineWidth = 1; c.setLineDash([5*dpr, 4*dpr]);
-    for(const db of bd){ const d = Math.pow(10,db/20)*amp; for(const y of [mid-d, mid+d]) if(y>0&&y<ch){ c.beginPath(); c.moveTo(0, Math.round(y)+0.5); c.lineTo(cw, Math.round(y)+0.5); c.stroke(); } }
-    c.setLineDash([]);
-  }
+  c.strokeStyle = 'rgba(255,196,77,0.38)'; c.lineWidth = 1; c.setLineDash([5*dpr, 4*dpr]);
+  for(const db of [0].concat(bd || [])){ const d = Math.pow(10,db/20)*amp; for(const y of [mid-d, mid+d]) if(y>0&&y<ch){ c.beginPath(); c.moveTo(0, Math.round(y)+0.5); c.lineTo(cw, Math.round(y)+0.5); c.stroke(); } }
+  c.setLineDash([]);
   c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(0, Math.round(mid), cw, 1);
   }
   const s = selOrNull();
